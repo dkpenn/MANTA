@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">MANTA</string>
+    <string name="title_activity_wifi_p2_p">WifiP2PActivity</string>
+</resources>
