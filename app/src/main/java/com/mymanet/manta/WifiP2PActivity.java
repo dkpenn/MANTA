@@ -126,6 +126,7 @@ public class WifiP2PActivity extends AppCompatActivity {
         if(firstDevice != null) {
             WifiP2pConfig config = new WifiP2pConfig();
             config.deviceAddress = firstDevice.deviceAddress;
+
             mManager.connect(mChannel, config, new ActionListener() {
                 @Override
                 public void onSuccess() {

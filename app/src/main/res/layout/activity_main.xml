@@ -23,6 +23,6 @@
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
         android:id="@+id/button"
-        android:onClick = "enterWifiP2P"
+        android:onClick = "enterWifiP2P (MainActivity)"
         />
 </RelativeLayout>

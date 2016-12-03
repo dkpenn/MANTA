@@ -4,9 +4,11 @@ import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.net.NetworkInfo;
 import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.WifiP2pManager.*;
+import android.widget.Toast;
 
 /**
  * Created by dk on 10/24/16.
@@ -21,14 +23,17 @@ public class WifiDirectBroadcastReceiver extends BroadcastReceiver {
     private Channel mChannel;
     private Activity mActivity;
     protected PeerListListener myPeerListListener;
+    protected ConnectionInfoListener mConnectionInfoListener;
 
-    public WifiDirectBroadcastReceiver(WifiP2pManager manager, Channel channel, Activity activity, PeerListListener peerListListener)
+    public WifiDirectBroadcastReceiver(WifiP2pManager manager, Channel channel, Activity activity,
+                                       PeerListListener peerListListener, ConnectionInfoListener connectionInfoListener)
     {
         super();
         mManager = manager;
         mChannel = channel;
         mActivity = activity;
         myPeerListListener = peerListListener;
+        mConnectionInfoListener = connectionInfoListener;
     }
 
 
@@ -54,7 +59,18 @@ public class WifiDirectBroadcastReceiver extends BroadcastReceiver {
 
             }
         } else if (WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
+
             // Respond to new connection or disconnections
+
+            NetworkInfo networkInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
+
+            if (networkInfo.isConnected())
+            {
+                if(mManager != null) {
+                    mManager.requestConnectionInfo(mChannel, mConnectionInfoListener);
+                }
+            }
+
         } else if (WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION.equals(action)) {
             // Respond to this device's wifi state changing
         }
