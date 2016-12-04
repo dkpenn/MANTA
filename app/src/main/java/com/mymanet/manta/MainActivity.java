@@ -17,4 +17,9 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, WifiP2PActivity.class);
         startActivity(intent);
     }
+
+    public void myFiles(View view) {
+        Intent intent = new Intent(this, MyFilesActivity.class);
+        startActivity(intent);
+    }
 }
