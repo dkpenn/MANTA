@@ -84,7 +84,7 @@ public class WifiP2PActivity extends AppCompatActivity {
             }
         };
 
-        mReceiver = new WifiDirectBroadcastReceiver(mManager, mChannel,this, mPeerListListener, mConnectionInfoListener);
+        mReceiver = new WifiDirectBroadcastReceiver(mManager, mChannel,this, mPeerListListener);
 
         mIntentFilter = new IntentFilter();
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
@@ -117,12 +117,16 @@ public class WifiP2PActivity extends AppCompatActivity {
     }
 
     public void connectToFirstDevice(WifiP2pDeviceList deviceList) {
+
+        // get first device
         WifiP2pDevice firstDevice = null;
         for(WifiP2pDevice device : deviceList.getDeviceList())
         {
             firstDevice = device;
             break;
         }
+
+        // connect to device
         if(firstDevice != null) {
             WifiP2pConfig config = new WifiP2pConfig();
             config.deviceAddress = firstDevice.deviceAddress;
