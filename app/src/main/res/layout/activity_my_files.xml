@@ -21,22 +21,35 @@
 
     </android.support.design.widget.AppBarLayout>
 
-
-    <ListView
-        android:layout_width="370dp"
-        android:layout_height="371dp"
-        android:layout_below="@id/toolbar"
-        android:id="@+id/uploaded_files"
-        android:layout_marginTop="100dp" />
-
-    <Button
-        android:text="Upload File"
+    <RelativeLayout
         android:layout_width="wrap_content"
-        android:layout_height="67dp"
-        android:id="@+id/button3"
-        android:layout_below="@id/uploaded_files"
-        android:onClick="uploadFiles"
-        tools:layout_gravity="bottom" />
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true">
+        <ListView
+            android:layout_width="370dp"
+            android:layout_height="371dp"
+            android:id="@+id/uploaded_files"
+            android:layout_marginTop="100dp" />
+
+        <Button
+            android:text="Upload File"
+            android:layout_width="wrap_content"
+            android:layout_height="67dp"
+            android:id="@+id/button3"
+            android:onClick="uploadFiles"
+            android:layout_below="@id/uploaded_files"
+            />
+
+        <Button
+            android:text="Delete"
+            android:layout_width="wrap_content"
+            android:layout_height="67dp"
+            android:id="@+id/button4"
+            android:layout_toRightOf="@id/button3"
+            android:layout_below="@id/uploaded_files"
+            android:onClick="deleteAll"
+            />
+    </RelativeLayout>
 
 
 </android.support.design.widget.CoordinatorLayout>

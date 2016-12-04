@@ -29,69 +29,32 @@ public class MyFilesActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        String[] fileNames = fileList();
-        boolean fileNamesFound = false;
-        for(String name : fileNames)
-        {
-            if(name.equals("file_names.txt"))
-            {
-                fileNamesFound = true;
-            }
-        }
+       refreshListView();
+    }
 
-        List<String> files = new ArrayList<String>();
-        if(fileNamesFound) {
-            FileInputStream fis = null;
-            BufferedReader br = null;
-            try{
-                fis = openFileInput("file_names.txt");
-                br = new BufferedReader(new InputStreamReader(fis));
-                String line;
-                while ((line = br.readLine()) != null)
-                {
-                    files.add(line);
-                }
-            }
-            catch(FileNotFoundException e) {
-                e.printStackTrace();
-            }
-            catch(IOException e) {
-                e.printStackTrace();
-            }
-            finally{
-                /*http://stackoverflow.com/questions/8981589/close-file-in-finally-block-doesnt-work*/
-                if(br != null)
-                {
-                    try {
-                        br.close();
-                    } catch (IOException e) {
-                        // This is unrecoverable. Just report it and move on
-                        e.printStackTrace();
-                    }
-                }
-
-                if(fis != null)
-                {
-                    try {
-                        fis.close();
-                    } catch (IOException e) {
-                        // This is unrecoverable. Just report it and move on
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-
-        final ArrayAdapter<String> imageNamesAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, files);
-        ListView listView = (ListView) findViewById(R.id.uploaded_files);
-        listView.setAdapter(imageNamesAdapter);
-
-
-        /*TODO: Add Shared Preference to note that file is created*/
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        refreshListView();
     }
 
     public void uploadFiles(View view) {
         Intent intent = new Intent(this, UploadFileActivity.class);
         startActivity(intent);
+    }
+
+    public void deleteAll(View view) {
+        MySQLLiteHelper db = new MySQLLiteHelper(this);
+        db.deleteAllFiles();
+        refreshListView();
+    }
+
+    private void refreshListView() {
+        final MySQLLiteHelper db = new MySQLLiteHelper(this);
+
+        List<String> files = db.getAllFileNames();
+        final ArrayAdapter<String> imageNamesAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, files);
+        ListView listView = (ListView) findViewById(R.id.uploaded_files);
+        listView.setAdapter(imageNamesAdapter);
     }
 }

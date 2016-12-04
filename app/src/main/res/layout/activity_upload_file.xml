@@ -20,19 +20,24 @@
             app:popupTheme="@style/AppTheme.PopupOverlay" />
 
     </android.support.design.widget.AppBarLayout>
-
-    <ListView
-        android:id="@+id/file_list"
-        android:layout_width="match_parent"
-        android:layout_height="401dp"
-        android:layout_marginTop="100dp" />
-    <Button
-        android:text="Back to My Files"
+    <RelativeLayout
         android:layout_width="wrap_content"
-        android:layout_height="67dp"
-        android:id="@+id/back_button"
-        android:layout_below="@id/uploaded_files"
-        tools:layout_gravity="bottom"
-        android:onClick="onBackButtonClick" />
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true">
+        <ListView
+            android:id="@+id/file_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="100dp" />
+        <Button
+            android:text="Back to My Files"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/back_button"
+            android:layout_below="@id/file_list"
+            android:layout_marginTop="20dp"
+            android:onClick="onBackButtonClick" />
+    </RelativeLayout>
+
 
 </android.support.design.widget.CoordinatorLayout>
