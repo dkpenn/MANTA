@@ -84,7 +84,7 @@ public class WifiP2PActivity extends AppCompatActivity {
             }
         };
 
-        mReceiver = new WifiDirectBroadcastReceiver(mManager, mChannel,this, mPeerListListener);
+        mReceiver = new WifiDirectBroadcastReceiver(mManager, mChannel,this, mPeerListListener, mConnectionInfoListener);
 
         mIntentFilter = new IntentFilter();
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
