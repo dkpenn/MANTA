@@ -3,14 +3,14 @@ package com.mymanet.manta;
 import java.util.LinkedList;
 import java.util.List;
 
-public class RequestPacket {
+class RequestPacket {
 
     private List<Integer> pathFromSrc;
     private String filename;
     private int timeToLive;
-    private int src;
+    private String src;
 
-    public RequestPacket(String filename, int timeToLive, int src) {
+    RequestPacket(String filename, int timeToLive, String src) {
         pathFromSrc = new LinkedList<>();
         this.filename = filename;
         this.timeToLive = timeToLive;
@@ -27,5 +27,9 @@ public class RequestPacket {
 
     boolean isTtlZero() {
         return this.timeToLive == 0;
+    }
+
+    String getSrc() {
+        return this.src;
     }
 }
