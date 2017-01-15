@@ -1,7 +1,6 @@
 package com.mymanet.manta;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.telephony.TelephonyManager;
@@ -36,7 +35,25 @@ public class RequestFileActivity extends AppCompatActivity {
         String uid = tManager.getDeviceId();
 
         RequestPacket packet = new RequestPacket(filename, TIME_TO_LIVE, uid);
-        Intent intent = new Intent(this, PropagateRequestActivity.class);
-        startActivity(intent);
+        setContentView(R.layout.activity_propagate_request);
+
+        // TODO move stuff from PropagateRequestActivity here
+
+        // check if current device contains files
+        // TODO connect to all of the devices around
+        // TODO send request to each other device
+//    private void propagateRequest(RequestPacket packet) {
+//        if (!packet.isTtlZero()) {
+//            // compare requested filename with own files
+//        }
+//    }
+        // compare requested filename with own files
+        // if has file,
+        // make connections with neighbors
+        // send request packet to each possible neighbor
+        // decrement max # of hops
+        // add this node to path to traverse
+//        Intent intent = new Intent(this, WifiP2PActivity.class);
+//        startActivity(intent);
     }
 }

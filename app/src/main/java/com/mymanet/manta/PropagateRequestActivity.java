@@ -10,12 +10,8 @@ import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.WifiP2pManager.*;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.View;
 import android.widget.Toast;
 
 /**
@@ -80,6 +76,7 @@ public class PropagateRequestActivity extends AppCompatActivity {
         lookForPeers();
 
         // TODO is any of this necessary?
+        setContentView(R.layout.activity_propagate_request);
 //        setContentView(R.layout.activity_wifi_p2_p);
 //        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 //        setSupportActionBar(toolbar);
@@ -149,21 +146,4 @@ public class PropagateRequestActivity extends AppCompatActivity {
             }
         });
     }
-
-    // check if current device contains files
-    // TODO connect to all of the devices around
-    // TODO send request to each other device
-//    private void propagateRequest(RequestPacket packet) {
-//        if (!packet.isTtlZero()) {
-//            // compare requested filename with own files
-//        }
-//    }
-    // compare requested filename with own files
-    // if has file,
-    // make connections with neighbors
-    // send request packet to each possible neighbor
-    // decrement max # of hops
-    // add this node to path to traverse
-//        Intent intent = new Intent(this, WifiP2PActivity.class);
-//        startActivity(intent);
 }

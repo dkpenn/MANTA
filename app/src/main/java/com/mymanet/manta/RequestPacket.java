@@ -1,35 +1,22 @@
 package com.mymanet.manta;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
-class RequestPacket {
+/**
+ * Sent by device requesting a file from the network
+ */
+class RequestPacket extends Packet {
 
-    private List<Integer> pathFromSrc;
-    private String filename;
-    private int timeToLive;
-    private String src;
+    private List<String> pathFromSrc;
 
     RequestPacket(String filename, int timeToLive, String src) {
-        pathFromSrc = new LinkedList<>();
-        this.filename = filename;
-        this.timeToLive = timeToLive;
-        this.src = src;
+        super(filename, timeToLive, src);
+        pathFromSrc = new ArrayList<>();
     }
 
-    void addToPath(int node) {
+    void addToPath(String node) {
         this.pathFromSrc.add(node);
     }
 
-    void decrementTtl() {
-        this.timeToLive--;
-    }
-
-    boolean isTtlZero() {
-        return this.timeToLive == 0;
-    }
-
-    String getSrc() {
-        return this.src;
-    }
 }
