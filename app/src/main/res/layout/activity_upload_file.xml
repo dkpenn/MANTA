@@ -21,22 +21,28 @@
 
     </android.support.design.widget.AppBarLayout>
     <RelativeLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true">
-        <ListView
-            android:id="@+id/file_list"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="100dp" />
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
         <Button
             android:text="Back to My Files"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/back_button"
-            android:layout_below="@id/file_list"
             android:layout_marginTop="20dp"
-            android:onClick="onBackButtonClick" />
+            android:layout_marginBottom="20dp"
+            android:onClick="onBackButtonClick"
+            android:layout_alignParentBottom="true"
+            />
+
+        <ListView
+            android:id="@+id/file_list"
+            android:layout_above="@id/back_button"
+            android:layout_marginTop="60dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop = "true"
+            android:layout_alignParentLeft="true"/>
     </RelativeLayout>
 
 
