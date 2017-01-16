@@ -1,5 +1,6 @@
 package com.mymanet.manta;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,6 +14,11 @@ class RequestPacket extends Packet {
     RequestPacket(String filename, int timeToLive, String src) {
         super(filename, timeToLive, src);
         pathFromSrc = new ArrayList<>();
+    }
+
+    RequestPacket(InputStream is) {
+        super(is);
+        
     }
 
     void addToPath(String node) {
