@@ -13,10 +13,7 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
@@ -35,7 +32,11 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class RequestFileActivity extends AppCompatActivity {
+/**
+ * allows user to request a file in the network
+ */
+
+public class RequestFileActivity2 extends AppCompatActivity {
 
     int TIME_TO_LIVE = 10;
     EditText mEdit;
@@ -51,18 +52,6 @@ public class RequestFileActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_request_file);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
-
         mEdit = (EditText)findViewById(R.id.requested_file);
 
         mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
@@ -109,13 +98,13 @@ public class RequestFileActivity extends AppCompatActivity {
     }
 
     private void startServer(WifiP2pInfo wifiP2pInfo) {
-        new RequestFileActivity.OFileServerAsyncTask().execute();
+        new RequestFileActivity2.OFileServerAsyncTask().execute();
     }
 
     private void sendFile(WifiP2pInfo wifiP2pInfo) {
         InetAddress[] addresses = new InetAddress[1];
         addresses[0] = wifiP2pInfo.groupOwnerAddress;
-        new RequestFileActivity.OFileClientAsyncTask().execute(addresses);
+        new RequestFileActivity2.OFileClientAsyncTask().execute(addresses);
     }
 
     // TODO needed?
@@ -363,5 +352,4 @@ public class RequestFileActivity extends AppCompatActivity {
         }
 
     }
-
 }

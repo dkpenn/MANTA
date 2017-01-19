@@ -47,6 +47,10 @@
         <activity
             android:name=".MyFilesActivity"
             android:label="@string/title_activity_my_files"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".RequestFileActivity"
+            android:label="@string/title_activity_request_file"
             android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
