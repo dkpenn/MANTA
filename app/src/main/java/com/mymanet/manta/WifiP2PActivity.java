@@ -149,6 +149,7 @@ public class WifiP2PActivity extends AppCompatActivity {
         if(firstDevice != null) {
             WifiP2pConfig config = new WifiP2pConfig();
             config.deviceAddress = firstDevice.deviceAddress;
+            config.groupOwnerIntent = 15;
 
             mManager.connect(mChannel, config, new ActionListener() {
                 @Override
