@@ -18,7 +18,7 @@ class RequestPacket extends Packet {
 
     RequestPacket(InputStream is) {
         super(is);
-        
+
     }
 
     void addToPath(String node) {
