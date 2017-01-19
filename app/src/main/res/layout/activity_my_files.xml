@@ -41,7 +41,7 @@
             />
 
         <Button
-            android:text="Delete"
+            android:text="Delete All Files"
             android:layout_width="wrap_content"
             android:layout_height="67dp"
             android:id="@+id/button4"
