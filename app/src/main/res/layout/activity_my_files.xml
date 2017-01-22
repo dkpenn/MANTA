@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context="com.mymanet.manta.WifiP2PActivity">
+    tools:context="com.mymanet.manta.MyFilesActivity">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
@@ -21,32 +21,35 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_gravity="bottom"
-        android:layout_width="match_parent"
-        android:layout_height="444dp">
-
-        <EditText
-            android:layout_width="176dp"
-            android:layout_height="wrap_content"
-            android:inputType="textPersonName"
-            android:layout_below="@id/button3"
-            android:text="File Name"
-            app:layout_anchorGravity="center_horizontal"
-            android:layout_gravity="center_horizontal"
-            android:ems="10"
-            android:id="@+id/fileName" />
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true">
+        <ListView
+            android:layout_width="370dp"
+            android:layout_height="371dp"
+            android:id="@+id/uploaded_files"
+            android:layout_marginTop="100dp" />
 
         <Button
-            android:text="Look for Peers"
+            android:text="Upload File"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="67dp"
             android:id="@+id/button3"
-            app:layout_anchorGravity="center_vertical|center_horizontal"
-            android:layout_gravity="center_vertical|center_horizontal"
-            android:onClick="lookForPeers" />
+            android:onClick="uploadFiles"
+            android:layout_below="@id/uploaded_files"
+            />
 
-    </LinearLayout>
+        <Button
+            android:text="Delete All Files"
+            android:layout_width="wrap_content"
+            android:layout_height="67dp"
+            android:id="@+id/button4"
+            android:layout_toRightOf="@id/button3"
+            android:layout_below="@id/uploaded_files"
+            android:onClick="deleteAll"
+            />
+    </RelativeLayout>
+
 
 </android.support.design.widget.CoordinatorLayout>

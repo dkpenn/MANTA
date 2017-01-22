@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context="com.mymanet.manta.WifiP2PActivity">
+    tools:context="com.mymanet.manta.UploadFileActivity">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
@@ -20,33 +20,30 @@
             app:popupTheme="@style/AppTheme.PopupOverlay" />
 
     </android.support.design.widget.AppBarLayout>
-
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_gravity="bottom"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="444dp">
-
-        <EditText
-            android:layout_width="176dp"
-            android:layout_height="wrap_content"
-            android:inputType="textPersonName"
-            android:layout_below="@id/button3"
-            android:text="File Name"
-            app:layout_anchorGravity="center_horizontal"
-            android:layout_gravity="center_horizontal"
-            android:ems="10"
-            android:id="@+id/fileName" />
+        android:layout_height="match_parent">
 
         <Button
-            android:text="Look for Peers"
+            android:text="Back to My Files"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/button3"
-            app:layout_anchorGravity="center_vertical|center_horizontal"
-            android:layout_gravity="center_vertical|center_horizontal"
-            android:onClick="lookForPeers" />
+            android:id="@+id/back_button"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="20dp"
+            android:onClick="onBackButtonClick"
+            android:layout_alignParentBottom="true"
+            />
 
-    </LinearLayout>
+        <ListView
+            android:id="@+id/file_list"
+            android:layout_above="@id/back_button"
+            android:layout_marginTop="60dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop = "true"
+            android:layout_alignParentLeft="true"/>
+    </RelativeLayout>
+
 
 </android.support.design.widget.CoordinatorLayout>

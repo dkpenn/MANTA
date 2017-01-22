@@ -13,8 +13,18 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
     }
 
-    public void enterWifiP2P(View view) {
+    public void enterWifiP2PActivity(View view) {
         Intent intent = new Intent(this, WifiP2PActivity.class);
+        startActivity(intent);
+    }
+
+    public void myFiles(View view) {
+        Intent intent = new Intent(this, MyFilesActivity.class);
+        startActivity(intent);
+    }
+
+    public void requestFile(View view) {
+        Intent intent = new Intent(this, RequestFileActivity2.class);
         startActivity(intent);
     }
 }
