@@ -58,6 +58,7 @@ public class WifiP2PActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        /*Setup Wifi P2P related things */
         mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
         mChannel = mManager.initialize(this, getMainLooper(), null);
 
@@ -69,6 +70,9 @@ public class WifiP2PActivity extends AppCompatActivity {
             }
         };
 
+        /**
+         * What to do when connection is available
+         */
         mConnectionInfoListener = new ConnectionInfoListener() {
             @Override
             public void onConnectionInfoAvailable(WifiP2pInfo wifiP2pInfo) {
@@ -95,7 +99,11 @@ public class WifiP2PActivity extends AppCompatActivity {
 
         mReceiver = new WifiDirectBroadcastReceiver(mManager, mChannel,this, mPeerListListener, mConnectionInfoListener);
 
-
+        /*
+         * Try to initialize discovery of peers
+         * TODO: may need a thread to just continue to look for peers for faster connection
+         * without exiting the app
+         */
         mManager.discoverPeers(mChannel, new ActionListener() {
             @Override
             public void onSuccess() {
@@ -159,7 +167,7 @@ public class WifiP2PActivity extends AppCompatActivity {
                 break;
         }
 
-        // connect to device
+        // connect to device with name Lord of Darkness
         if(firstDevice != null) {
             WifiP2pConfig config = new WifiP2pConfig();
             config.deviceAddress = firstDevice.deviceAddress;
@@ -287,8 +295,10 @@ public class WifiP2PActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(InetAddress[] params) {
 
-            if(android.os.Debug.isDebuggerConnected())
-                android.os.Debug.waitForDebugger();
+            for(int i = 0; i < 1000; i++)
+            {
+
+            }
 
             Context context = getApplicationContext();
 
@@ -472,7 +482,9 @@ public class WifiP2PActivity extends AppCompatActivity {
                 }
 
                 out.close();
+                /* end connection with device */
                 disconnect();
+                /* Stop Peer discovery if it is still going */
                 mManager.stopPeerDiscovery(mChannel, new ActionListener() {
                     @Override
                     public void onSuccess() {
