@@ -95,6 +95,19 @@ public class WifiP2PActivity extends AppCompatActivity {
 
         mReceiver = new WifiDirectBroadcastReceiver(mManager, mChannel,this, mPeerListListener, mConnectionInfoListener);
 
+
+        mManager.discoverPeers(mChannel, new ActionListener() {
+            @Override
+            public void onSuccess() {
+                Log.d("wifi p2p", "discover peers");
+            }
+
+            @Override
+            public void onFailure(int i) {
+                Log.d("wifi p2p", "not discover peers");
+            }
+        });
+
         /* Setup intent filter for activity*/
         mIntentFilter = new IntentFilter();
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
@@ -141,7 +154,7 @@ public class WifiP2PActivity extends AppCompatActivity {
         WifiP2pDevice firstDevice = null;
         for(WifiP2pDevice device : deviceList.getDeviceList())
         {
-            if(device.deviceName.equals("tanner"))
+            if(device.deviceName.equals("Lord of Darkness"))
                 firstDevice = device;
                 break;
         }
@@ -391,8 +404,6 @@ public class WifiP2PActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(Void ... params) {
 
-            if(android.os.Debug.isDebuggerConnected())
-                android.os.Debug.waitForDebugger();
             /** Create a server socket and wait for client connections. This
              * call blocks until a connection is accepted from a client
              */
@@ -462,6 +473,17 @@ public class WifiP2PActivity extends AppCompatActivity {
 
                 out.close();
                 disconnect();
+                mManager.stopPeerDiscovery(mChannel, new ActionListener() {
+                    @Override
+                    public void onSuccess() {
+                        Log.d("wifi p2p", "stop peer discovery");
+                    }
+
+                    @Override
+                    public void onFailure(int i) {
+                        Log.d("wifi p2p", "not stop peer discovery");
+                    }
+                });
             }
             return null;
         }
