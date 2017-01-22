@@ -35,7 +35,7 @@ public class UploadFileActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        /*First check if any files already exist in saved */
+        /* First check if any files already exist in saved */
         /* TODO: Add action to filter out files that already exist*/
 
         File imageDir = Environment.getExternalStoragePublicDirectory("/" +

@@ -3,4 +3,8 @@
     <string name="title_activity_wifi_p2_p">WifiP2PActivity</string>
     <string name="title_activity_upload_file">UploadFileActivity</string>
     <string name="title_activity_my_files">MyFilesActivity</string>
+    <string name="request_a_file">Request a File</string>
+    <string name="filename">Filename</string>
+    <string name="request">Request!</string>
+    <string name="title_activity_request_file">RequestFileActivity</string>
 </resources>
