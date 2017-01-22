@@ -54,14 +54,14 @@ public class RequestFileActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
+//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+//        fab.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+//                        .setAction("Action", null).show();
+//            }
+//        });
 
         mEdit = (EditText)findViewById(R.id.requested_file);
 
@@ -70,11 +70,10 @@ public class RequestFileActivity extends AppCompatActivity {
         mPeerListListener = new WifiP2pManager.PeerListListener() {
             @Override
             public void onPeersAvailable(WifiP2pDeviceList wifiP2pDeviceList) {
-                connectToAllPeers(wifiP2pDeviceList);
+                connectToFirstDevice(wifiP2pDeviceList);
             }
         };
 
-        // TODO what's the point of this section?
         mConnectionInfoListener = new WifiP2pManager.ConnectionInfoListener() {
             @Override
             public void onConnectionInfoAvailable(WifiP2pInfo wifiP2pInfo) {
@@ -136,8 +135,9 @@ public class RequestFileActivity extends AppCompatActivity {
      * When user clicks to request a file, tries to make connections with neighbors
      * @param view
      */
-    public void requestFile(View view) {
+    public void requestByFilename(View view) {
         String filename = mEdit.getText().toString();
+        System.out.println(filename);
 
         // get request src id
         TelephonyManager tManager = (TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
@@ -160,7 +160,6 @@ public class RequestFileActivity extends AppCompatActivity {
 
     public void propagateRequest() {
         lookForPeers();
-        // TODO connect to all of the devices around
     }
 
     public boolean containsFile() {
@@ -174,12 +173,12 @@ public class RequestFileActivity extends AppCompatActivity {
             @Override
             public void onSuccess() {
                 // TODO decide on success scenario
-//                Context context = getApplicationContext();
-//                CharSequence text = "Discovery succeeded";
-//                int duration = Toast.LENGTH_SHORT;
-//
-//                Toast toast = Toast.makeText(context, text, duration);
-//                toast.show();
+                Context context = getApplicationContext();
+                CharSequence text = "Discovery succeeded";
+                int duration = Toast.LENGTH_SHORT;
+
+                Toast toast = Toast.makeText(context, text, duration);
+                toast.show();
             }
 
             @Override
@@ -193,7 +192,54 @@ public class RequestFileActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Initial callback method for peer list listener.
+     * Once the state of the peer list listener changes,
+     * this method is called
+     * @param deviceList
+     */
+    public void connectToFirstDevice(WifiP2pDeviceList deviceList) {
+
+        // get first device
+        WifiP2pDevice firstDevice = null;
+        for(WifiP2pDevice device : deviceList.getDeviceList())
+        {
+            firstDevice = device;
+            if(device.deviceName.equals("SIRIUS"))
+                break;
+        }
+
+        // connect to device
+        if(firstDevice != null) {
+            System.out.println("Primary device type: ");
+            System.out.println(firstDevice.primaryDeviceType);
+            WifiP2pConfig config = new WifiP2pConfig();
+            config.deviceAddress = firstDevice.deviceAddress;
+            config.groupOwnerIntent = 15;
+
+            mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
+                @Override
+                public void onSuccess() {
+                    Context context = getApplicationContext();
+                    CharSequence text = "Connection Successful: In Progress";
+                    int duration = Toast.LENGTH_SHORT;
+                    Toast.makeText(context, text, duration).show();
+                }
+
+                @Override
+                public void onFailure(int i) {
+                    Context context = getApplicationContext();
+                    CharSequence text = "Connection Failed: In Progress";
+                    int duration = Toast.LENGTH_SHORT;
+                    Toast.makeText(context, text, duration).show();
+                }
+            });
+        }
+    }
+
     public void connectToAllPeers(WifiP2pDeviceList deviceList) {
+
+        // TODO implement so this works
 
         for (WifiP2pDevice device : deviceList.getDeviceList()) {
 
@@ -201,7 +247,7 @@ public class RequestFileActivity extends AppCompatActivity {
             if (device != null) {
                 WifiP2pConfig config = new WifiP2pConfig();
                 config.deviceAddress = device.deviceAddress;
-
+                config.groupOwnerIntent = 15;
                 mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
                     @Override
                     public void onSuccess() {
@@ -327,12 +373,26 @@ public class RequestFileActivity extends AppCompatActivity {
                  *  If this code is reached, a client has connected and transferred data
                  */
 
-                InputStream inputStream = client.getInputStream();
-
                 // parse request packet
+                final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+                        "Desk" + ".jpg");
 
 
+//                File dirs = new File(f.getParent());
+//                if(!dirs.exists())
+//                {
+//                    dirs.mkdirs();
+//                }
+
+                f.createNewFile();
+
+                InputStream inputStream = client.getInputStream();
+                copyFile(inputStream, new FileOutputStream(f));
                 serverSocket.close();
+
+                return f.getAbsolutePath();
+
+
             } catch (IOException e) {
                 Log.e("Wifi P2P activity", e.getMessage());
             }

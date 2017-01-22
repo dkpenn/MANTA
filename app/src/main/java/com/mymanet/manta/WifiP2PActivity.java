@@ -20,6 +20,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -48,7 +50,9 @@ public class WifiP2PActivity extends AppCompatActivity {
     PeerListListener mPeerListListener;
     ConnectionInfoListener mConnectionInfoListener;
     IntentFilter mIntentFilter;
-
+    String filename;
+    EditText mEdit;
+    Button btn;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,6 +67,16 @@ public class WifiP2PActivity extends AppCompatActivity {
                 connectToFirstDevice(wifiP2pDeviceList);
             }
         };
+
+//        mEdit = (EditText)findViewById(R.id.editText);
+        btn = (Button) findViewById(R.id.button3);
+        btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                filename = mEdit.getText().toString();
+                lookForPeers(view);
+            }
+        });
 
         mConnectionInfoListener = new ConnectionInfoListener() {
             @Override
@@ -142,7 +156,8 @@ public class WifiP2PActivity extends AppCompatActivity {
         for(WifiP2pDevice device : deviceList.getDeviceList())
         {
             firstDevice = device;
-            break;
+            if(device.deviceName.equals("SIRIUS"))
+                break;
         }
 
         // connect to device
@@ -366,7 +381,8 @@ public class WifiP2PActivity extends AppCompatActivity {
                  * Send file name
                  */
                 out = new PrintWriter(client.getOutputStream(), true);
-                out.println("Desk.jpg");
+                out.println(filename);
+                //out.println("Desk.jpg");
 
                 /**
                  *  If this code is reached, a client has connected and transferred data

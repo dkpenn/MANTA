@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void requestFile(View view) {
-        Intent intent = new Intent(this, RequestFileActivity2.class);
+        Intent intent = new Intent(this, RequestFileActivity.class);
         startActivity(intent);
     }
 }

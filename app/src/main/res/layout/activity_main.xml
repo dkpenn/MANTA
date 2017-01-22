@@ -31,12 +31,11 @@
         android:onClick="myFiles" />
 
     <Button
-        android:text="Button"
+        android:text="Request File"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/button8"
+        android:onClick="requestFile"
         android:layout_below="@+id/button2"
-        android:layout_alignLeft="@+id/button"
-        android:layout_alignStart="@+id/button"
-        android:onClick="requestFile" />
+        android:layout_centerHorizontal="true" />
 </RelativeLayout>
