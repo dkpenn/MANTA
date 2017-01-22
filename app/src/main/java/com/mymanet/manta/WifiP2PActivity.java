@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
+import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.WifiP2pManager.*;
@@ -20,7 +21,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -50,13 +50,15 @@ public class WifiP2PActivity extends AppCompatActivity {
     PeerListListener mPeerListListener;
     ConnectionInfoListener mConnectionInfoListener;
     IntentFilter mIntentFilter;
-    String filename;
     EditText mEdit;
-    Button btn;
+
+    String filename = "";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        /*Setup Wifi P2P related things */
         mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
         mChannel = mManager.initialize(this, getMainLooper(), null);
 
@@ -68,16 +70,9 @@ public class WifiP2PActivity extends AppCompatActivity {
             }
         };
 
-//        mEdit = (EditText)findViewById(R.id.editText);
-        btn = (Button) findViewById(R.id.button3);
-        btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                filename = mEdit.getText().toString();
-                lookForPeers(view);
-            }
-        });
-
+        /**
+         * What to do when connection is available
+         */
         mConnectionInfoListener = new ConnectionInfoListener() {
             @Override
             public void onConnectionInfoAvailable(WifiP2pInfo wifiP2pInfo) {
@@ -104,6 +99,23 @@ public class WifiP2PActivity extends AppCompatActivity {
 
         mReceiver = new WifiDirectBroadcastReceiver(mManager, mChannel,this, mPeerListListener, mConnectionInfoListener);
 
+        /*
+         * Try to initialize discovery of peers
+         * TODO: may need a thread to just continue to look for peers for faster connection
+         * without exiting the app
+         */
+        mManager.discoverPeers(mChannel, new ActionListener() {
+            @Override
+            public void onSuccess() {
+                Log.d("wifi p2p", "discover peers");
+            }
+
+            @Override
+            public void onFailure(int i) {
+                Log.d("wifi p2p", "not discover peers");
+            }
+        });
+
         /* Setup intent filter for activity*/
         mIntentFilter = new IntentFilter();
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
@@ -115,14 +127,9 @@ public class WifiP2PActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
+        mEdit = (EditText)findViewById(R.id.fileName);
+
+
     }
 
     /***
@@ -155,12 +162,12 @@ public class WifiP2PActivity extends AppCompatActivity {
         WifiP2pDevice firstDevice = null;
         for(WifiP2pDevice device : deviceList.getDeviceList())
         {
-            firstDevice = device;
-            if(device.deviceName.equals("SIRIUS"))
+            if(device.deviceName.equals("Lord of Darkness"))
+                firstDevice = device;
                 break;
         }
 
-        // connect to device
+        // connect to device with name Lord of Darkness
         if(firstDevice != null) {
             WifiP2pConfig config = new WifiP2pConfig();
             config.deviceAddress = firstDevice.deviceAddress;
@@ -183,6 +190,11 @@ public class WifiP2PActivity extends AppCompatActivity {
                     Toast.makeText(context, text, duration).show();
                 }
             });
+
+            Context context = getApplicationContext();
+            CharSequence text = "Not found";
+            int duration = Toast.LENGTH_SHORT;
+            Toast.makeText(context, text, duration).show();
         }
     }
 
@@ -200,6 +212,8 @@ public class WifiP2PActivity extends AppCompatActivity {
      */
     public void lookForPeers(View view)
     {
+        filename = mEdit.getText().toString();
+
         mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener(){
 
             @Override
@@ -240,6 +254,35 @@ public class WifiP2PActivity extends AppCompatActivity {
         new OFileClientAsyncTask().execute(addresses);
     }
 
+    /**
+     * disconnect from stack overflow
+     * http://stackoverflow.com/questions/18679481/wifi-direct-end-connection-to-peer-on-android
+     * */
+    protected void disconnect() {
+        if (mManager != null && mChannel != null) {
+            mManager.requestGroupInfo(mChannel, new GroupInfoListener() {
+                @Override
+                public void onGroupInfoAvailable(WifiP2pGroup group) {
+                    if (group != null && mManager != null && mChannel != null
+                            && group.isGroupOwner()) {
+                        mManager.removeGroup(mChannel, new ActionListener() {
+
+                            @Override
+                            public void onSuccess() {
+                                Log.d("disconnect", "removeGroup onSuccess -");
+                            }
+
+                            @Override
+                            public void onFailure(int reason) {
+                                Log.d("disconnect", "removeGroup onFailure -" + reason);
+                            }
+                        });
+                    }
+                }
+            });
+        }
+    }
+
     /***
      * Class describing async task for client to transfer file to server
      */
@@ -251,6 +294,11 @@ public class WifiP2PActivity extends AppCompatActivity {
 
         @Override
         protected String doInBackground(InetAddress[] params) {
+
+            for(int i = 0; i < 1000; i++)
+            {
+
+            }
 
             Context context = getApplicationContext();
 
@@ -382,7 +430,7 @@ public class WifiP2PActivity extends AppCompatActivity {
                  */
                 out = new PrintWriter(client.getOutputStream(), true);
                 out.println(filename);
-                //out.println("Desk.jpg");
+                // out.println("Desk.jpg");
 
                 /**
                  *  If this code is reached, a client has connected and transferred data
@@ -397,7 +445,7 @@ public class WifiP2PActivity extends AppCompatActivity {
 //                        +  ".jpg");
 
                 final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-                        "Desk" + ".jpg");
+                       filename);
 
 
 //                File dirs = new File(f.getParent());
@@ -434,6 +482,20 @@ public class WifiP2PActivity extends AppCompatActivity {
                 }
 
                 out.close();
+                /* end connection with device */
+                disconnect();
+                /* Stop Peer discovery if it is still going */
+                mManager.stopPeerDiscovery(mChannel, new ActionListener() {
+                    @Override
+                    public void onSuccess() {
+                        Log.d("wifi p2p", "stop peer discovery");
+                    }
+
+                    @Override
+                    public void onFailure(int i) {
+                        Log.d("wifi p2p", "not stop peer discovery");
+                    }
+                });
             }
             return null;
         }

@@ -8,6 +8,7 @@ import android.net.NetworkInfo;
 import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.WifiP2pManager.*;
+import android.util.Log;
 import android.widget.Toast;
 
 /**
@@ -69,6 +70,21 @@ public class WifiDirectBroadcastReceiver extends BroadcastReceiver {
                 if(mManager != null) {
                     mManager.requestConnectionInfo(mChannel, mConnectionInfoListener);
                 }
+            }
+
+            else
+            {
+                mManager.stopPeerDiscovery(mChannel, new ActionListener() {
+                    @Override
+                    public void onSuccess() {
+                        Log.d("BroadcastReceiver", "Stopped Peer Discovery");
+                    }
+
+                    @Override
+                    public void onFailure(int i) {
+                        Log.d("BroadcastReceiver", "Not stopped Peer Discovery");
+                    }
+                });
             }
 
         } else if (WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION.equals(action)) {
