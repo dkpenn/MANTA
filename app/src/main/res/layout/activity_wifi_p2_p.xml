@@ -21,23 +21,32 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="@dimen/fab_margin"
-        app:srcCompat="@android:drawable/ic_dialog_email" />
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_gravity="bottom"
+        android:layout_width="match_parent"
+        android:layout_height="444dp">
 
-    <Button
-        android:text="Look for Peers"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/button3"
-        app:layout_anchorGravity="center_vertical|center_horizontal"
-        android:layout_gravity="center_vertical|center_horizontal"
-        android:onClick="lookForPeers" />
+        <EditText
+            android:layout_width="176dp"
+            android:layout_height="wrap_content"
+            android:inputType="textPersonName"
+            android:layout_below="@id/button3"
+            android:text="File Name"
+            app:layout_anchorGravity="center_horizontal"
+            android:layout_gravity="center_horizontal"
+            android:ems="10"
+            android:id="@+id/fileName" />
 
-    <include layout="@layout/content_wifi_p2_p" />
+        <Button
+            android:text="Look for Peers"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/button3"
+            app:layout_anchorGravity="center_vertical|center_horizontal"
+            android:layout_gravity="center_vertical|center_horizontal"
+            android:onClick="lookForPeers" />
+
+    </LinearLayout>
 
 </android.support.design.widget.CoordinatorLayout>
