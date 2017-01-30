@@ -32,6 +32,8 @@ abstract class Packet {
         return this.src;
     }
 
+    String getFilename() { return this.filename; }
+
     boolean isTtlZero() {
         return this.timeToLive == 0;
     }

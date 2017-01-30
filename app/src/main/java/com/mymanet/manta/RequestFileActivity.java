@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
+import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.AsyncTask;
@@ -34,6 +35,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.List;
 
 public class RequestFileActivity extends AppCompatActivity {
 
@@ -46,10 +48,13 @@ public class RequestFileActivity extends AppCompatActivity {
     WifiP2pManager.PeerListListener mPeerListListener;
     WifiP2pManager.ConnectionInfoListener mConnectionInfoListener;
     IntentFilter mIntentFilter;
+    RequestPacket packet;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        System.out.println("onCreate entered");
         setContentView(R.layout.activity_request_file);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -63,6 +68,7 @@ public class RequestFileActivity extends AppCompatActivity {
 //            }
 //        });
 
+        packet = null;
         mEdit = (EditText)findViewById(R.id.requested_file);
 
         mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
@@ -137,21 +143,21 @@ public class RequestFileActivity extends AppCompatActivity {
      */
     public void requestByFilename(View view) {
         String filename = mEdit.getText().toString();
-        System.out.println(filename);
 
         // get request src id
         TelephonyManager tManager = (TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
         String uid = tManager.getDeviceId();
 
-        RequestPacket packet = new RequestPacket(filename, TIME_TO_LIVE, uid);
+        Context context = getApplicationContext();
+        packet = new RequestPacket(filename, TIME_TO_LIVE, uid);
 
-        if (containsFile()) {
-            Context context = getApplicationContext();
-            CharSequence text = "Requested file exists on this device";
-            int duration = Toast.LENGTH_SHORT;
-            Toast.makeText(context, text, duration).show();
-            return;
-        }
+//        if (containsFile()) {
+//            Context context = getApplicationContext();
+//            CharSequence text = "Requested file exists on this device";
+//            int duration = Toast.LENGTH_SHORT;
+//            Toast.makeText(context, text, duration).show();
+//            return;
+//        }
 
         setContentView(R.layout.activity_propagate_request);
 
@@ -200,13 +206,16 @@ public class RequestFileActivity extends AppCompatActivity {
      */
     public void connectToFirstDevice(WifiP2pDeviceList deviceList) {
 
+        System.out.println("Trying to connect to a device...");
         // get first device
         WifiP2pDevice firstDevice = null;
         for(WifiP2pDevice device : deviceList.getDeviceList())
         {
             firstDevice = device;
-            if(device.deviceName.equals("SIRIUS"))
+            if(device.deviceName.equals("Pia") || device.deviceName.equals("totoro")) {
+                System.out.println("Connecting to device named " + device.deviceName);
                 break;
+            }
         }
 
         // connect to device
@@ -237,36 +246,61 @@ public class RequestFileActivity extends AppCompatActivity {
         }
     }
 
-    public void connectToAllPeers(WifiP2pDeviceList deviceList) {
+//    public void connectToAllPeers(WifiP2pDeviceList deviceList) {
+//
+//        // TODO implement so this works
+//
+//        for (WifiP2pDevice device : deviceList.getDeviceList()) {
+//
+//            // connect to device
+//            if (device != null) {
+//                WifiP2pConfig config = new WifiP2pConfig();
+//                config.deviceAddress = device.deviceAddress;
+//                config.groupOwnerIntent = 15;
+//                mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
+//                    @Override
+//                    public void onSuccess() {
+//                        Context context = getApplicationContext();
+//                        CharSequence text = "Connection Successful: In Progress";
+//                        int duration = Toast.LENGTH_SHORT;
+//                        Toast.makeText(context, text, duration).show();
+//                    }
+//
+//                    @Override
+//                    public void onFailure(int i) {
+//                        Context context = getApplicationContext();
+//                        CharSequence text = "Connection Failed: In Progress";
+//                        int duration = Toast.LENGTH_SHORT;
+//                        Toast.makeText(context, text, duration).show();
+//                    }
+//                });
+//
+//            }
+//        }
+//    }
 
-        // TODO implement so this works
+    protected void disconnect() {
+        if (mManager != null && mChannel != null) {
+            mManager.requestGroupInfo(mChannel, new WifiP2pManager.GroupInfoListener() {
+                @Override
+                public void onGroupInfoAvailable(WifiP2pGroup group) {
+                    if (group != null && mManager != null && mChannel != null
+                            && group.isGroupOwner()) {
+                        mManager.removeGroup(mChannel, new WifiP2pManager.ActionListener() {
 
-        for (WifiP2pDevice device : deviceList.getDeviceList()) {
+                            @Override
+                            public void onSuccess() {
+                                Log.d("disconnect", "removeGroup onSuccess -");
+                            }
 
-            // connect to device
-            if (device != null) {
-                WifiP2pConfig config = new WifiP2pConfig();
-                config.deviceAddress = device.deviceAddress;
-                config.groupOwnerIntent = 15;
-                mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
-                    @Override
-                    public void onSuccess() {
-                        Context context = getApplicationContext();
-                        CharSequence text = "Connection Successful: In Progress";
-                        int duration = Toast.LENGTH_SHORT;
-                        Toast.makeText(context, text, duration).show();
+                            @Override
+                            public void onFailure(int reason) {
+                                Log.d("disconnect", "removeGroup onFailure -" + reason);
+                            }
+                        });
                     }
-
-                    @Override
-                    public void onFailure(int i) {
-                        Context context = getApplicationContext();
-                        CharSequence text = "Connection Failed: In Progress";
-                        int duration = Toast.LENGTH_SHORT;
-                        Toast.makeText(context, text, duration).show();
-                    }
-                });
-
-            }
+                }
+            });
         }
     }
 
@@ -285,8 +319,9 @@ public class RequestFileActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(InetAddress[] params) {
 
+//            android.os.Debug.waitForDebugger();
+            System.out.println("client started");
             Context context = getApplicationContext();
-
             InetAddress groupOwnerAddress = params[0];
             int port = 8888;
             int len;
@@ -308,12 +343,24 @@ public class RequestFileActivity extends AppCompatActivity {
 
                 //inputStream = cr.openInputStream(Uri.parse("/storage/emulated/0/DCIM/Camera/Desk.jpg"));
                 File root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-                String path1 = "file:////"+ root.getAbsolutePath() + "/Desk.jpg";
-                String path = "file://sdcard/Pictures/";
-                inputStream = cr.openInputStream(Uri.parse(path1));
+                RequestPacket packet = RequestFileActivity.this.packet;
+
+                // TODO if packet hasn't been initialized by this point is that bad? async?
+                if (packet == null) {
+                    CharSequence text = "Request Error";
+                    int duration = Toast.LENGTH_SHORT;
+                    Toast.makeText(context, text, duration).show();
+                }
+
+                System.out.println("sending filename");
+
+                String path = "file:////" + root.getAbsolutePath() + packet.getFilename();
+                inputStream = cr.openInputStream(Uri.parse(path));
                 while((len = inputStream.read(buf)) != -1) {
                     outputStream.write(buf, 0, len);
                 }
+
+                System.out.println("filename sent");
 
                 outputStream.close();
                 inputStream.close();
@@ -361,10 +408,19 @@ public class RequestFileActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(Void ... params) {
 
+            System.out.println("server started");
+
+//            android.os.Debug.waitForDebugger();
+
             /** Create a server socket and wait for client connections. This
              * call blocks until a connection is accepted from a client
              */
             try {
+//                Context context = getApplicationContext();
+//                CharSequence text = "connected - server";
+//                int duration = Toast.LENGTH_SHORT;
+//                Toast.makeText(context, text, duration).show();
+
                 ServerSocket serverSocket = new ServerSocket(8888);
 
                 Socket client = serverSocket.accept();
@@ -373,25 +429,19 @@ public class RequestFileActivity extends AppCompatActivity {
                  *  If this code is reached, a client has connected and transferred data
                  */
 
-                // parse request packet
-                final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-                        "Desk" + ".jpg");
-
-
-//                File dirs = new File(f.getParent());
-//                if(!dirs.exists())
-//                {
-//                    dirs.mkdirs();
-//                }
-
-                f.createNewFile();
-
                 InputStream inputStream = client.getInputStream();
-                copyFile(inputStream, new FileOutputStream(f));
+                String filename = inputStream.toString();
+
+//                text = "recieved " + filename;
+//                Toast.makeText(context, text, duration).show();
+
+                System.out.println("Recieved " + filename + "!");
+
                 serverSocket.close();
 
-                return f.getAbsolutePath();
+                boolean returned = returnFile(filename);
 
+                disconnect();
 
             } catch (IOException e) {
                 Log.e("Wifi P2P activity", e.getMessage());
@@ -406,6 +456,27 @@ public class RequestFileActivity extends AppCompatActivity {
             {
                 fileOutputStream.write(buffer, 0, read);
             }
+        }
+
+        /**
+         * If this phone has the requested file, send it back
+         * @param filename requested file
+         * @return true if had file and sent it back, false otherwise
+         */
+        private boolean returnFile(String filename) {
+            Context context = getApplicationContext();
+            final MySQLLiteHelper db = new MySQLLiteHelper(context);
+            List<MantaFile> files = db.getFilesWithName(filename);
+            MantaFile toSend = null;
+            if (files.isEmpty()) {
+                return false;
+            } else {
+                // arbitrarily send first file in list of files with this name
+                // assume there shouldn't be more than one file with a given name
+                toSend = files.get(0);
+            }
+            // TODO send toSend back
+            return true;
         }
 
         protected void onProgressUpdate() {

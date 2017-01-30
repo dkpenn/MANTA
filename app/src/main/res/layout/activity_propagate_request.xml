@@ -29,13 +29,10 @@
             android:text="Cancel Request"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="43dp"
+            android:layout_marginTop="45dp"
             android:id="@+id/button9"
-            android:layout_marginRight="11dp"
-            android:layout_marginEnd="11dp"
             android:layout_below="@+id/progressBar2"
-            android:layout_alignRight="@+id/textView9"
-            android:layout_alignEnd="@+id/textView9" />
+            android:layout_centerHorizontal="true" />
 
     </RelativeLayout>
 </LinearLayout>
