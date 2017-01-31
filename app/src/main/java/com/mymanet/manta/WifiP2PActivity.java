@@ -15,8 +15,6 @@ import android.net.wifi.p2p.WifiP2pManager.*;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -51,8 +49,10 @@ public class WifiP2PActivity extends AppCompatActivity {
     ConnectionInfoListener mConnectionInfoListener;
     IntentFilter mIntentFilter;
     EditText mEdit;
+    EditText mEdit2;
 
     String filename = "";
+    String deviceName = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -128,7 +128,7 @@ public class WifiP2PActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         mEdit = (EditText)findViewById(R.id.fileName);
-
+        mEdit2 = (EditText)findViewById(R.id.deviceName);
 
     }
 
@@ -158,19 +158,20 @@ public class WifiP2PActivity extends AppCompatActivity {
      */
     public void connectToFirstDevice(WifiP2pDeviceList deviceList) {
 
+
         // get first device
-        WifiP2pDevice firstDevice = null;
+        WifiP2pDevice chosenDevice = null;
         for(WifiP2pDevice device : deviceList.getDeviceList())
         {
-            if(device.deviceName.equals("Lord of Darkness"))
-                firstDevice = device;
+            if(device.deviceName.equals(deviceName))
+                chosenDevice = device;
                 break;
         }
 
         // connect to device with name Lord of Darkness
-        if(firstDevice != null) {
+        if(chosenDevice != null) {
             WifiP2pConfig config = new WifiP2pConfig();
-            config.deviceAddress = firstDevice.deviceAddress;
+            config.deviceAddress = chosenDevice.deviceAddress;
             config.groupOwnerIntent = 15;
 
             mManager.connect(mChannel, config, new ActionListener() {
@@ -213,6 +214,7 @@ public class WifiP2PActivity extends AppCompatActivity {
     public void lookForPeers(View view)
     {
         filename = mEdit.getText().toString();
+        deviceName = mEdit2.getText().toString();
 
         mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener(){
 
@@ -315,7 +317,7 @@ public class WifiP2PActivity extends AppCompatActivity {
                  *
                  */
                 socket.bind(null);
-                socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 500);
+                socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 1000);
 
                 /**
                  * Get name of file that server wants
@@ -379,6 +381,13 @@ public class WifiP2PActivity extends AppCompatActivity {
                 }
 
             }
+
+            runOnUiThread(new Runnable() {
+                public void run() {
+
+                    Toast.makeText(WifiP2PActivity.this, "Received " + filename, Toast.LENGTH_SHORT).show();
+                }
+            });
 
             return null;
         }
