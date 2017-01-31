@@ -15,6 +15,7 @@ import android.net.wifi.p2p.WifiP2pManager.*;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -50,6 +51,8 @@ public class WifiP2PActivity extends AppCompatActivity {
     IntentFilter mIntentFilter;
     EditText mEdit;
     EditText mEdit2;
+
+    Handler mBroadcastHandler;
 
     String filename = "";
     String deviceName = "";
@@ -123,6 +126,9 @@ public class WifiP2PActivity extends AppCompatActivity {
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
 
+        mBroadcastHandler = new Handler();
+        mBroadcastHandler.postDelayed(mServiceBroadcastingRunnable, 1000);
+
         setContentView(R.layout.activity_wifi_p2_p);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -131,6 +137,26 @@ public class WifiP2PActivity extends AppCompatActivity {
         mEdit2 = (EditText)findViewById(R.id.deviceName);
 
     }
+
+    /* from stack overflow
+     * https://stackoverflow.com/questions/26300889/wifi-p2p-service-discovery-works-intermittently
+      * */
+    private Runnable mServiceBroadcastingRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
+                @Override
+                public void onSuccess() {
+                }
+
+                @Override
+                public void onFailure(int error) {
+                }
+            });
+            mBroadcastHandler
+                    .postDelayed(mServiceBroadcastingRunnable, 1000);
+        }
+    };
 
     /***
      *  Register the broadcast receiver with the intent values to be matched
