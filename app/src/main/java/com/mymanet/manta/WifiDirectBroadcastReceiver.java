@@ -74,17 +74,17 @@ public class WifiDirectBroadcastReceiver extends BroadcastReceiver {
 
             else
             {
-                mManager.stopPeerDiscovery(mChannel, new ActionListener() {
-                    @Override
-                    public void onSuccess() {
-                        Log.d("BroadcastReceiver", "Stopped Peer Discovery");
-                    }
-
-                    @Override
-                    public void onFailure(int i) {
-                        Log.d("BroadcastReceiver", "Not stopped Peer Discovery");
-                    }
-                });
+//                mManager.stopPeerDiscovery(mChannel, new ActionListener() {
+//                    @Override
+//                    public void onSuccess() {
+//                        Log.d("BroadcastReceiver", "Stopped Peer Discovery");
+//                    }
+//
+//                    @Override
+//                    public void onFailure(int i) {
+//                        Log.d("BroadcastReceiver", "Not stopped Peer Discovery");
+//                    }
+//                });
             }
 
         } else if (WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION.equals(action)) {

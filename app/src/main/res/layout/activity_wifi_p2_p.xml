@@ -38,6 +38,15 @@
             android:ems="10"
             android:id="@+id/fileName" />
 
+        <EditText
+            android:layout_width="176dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/fileName"
+            android:text="Device Name"
+            app:layout_anchorGravity="center_horizontal"
+            android:layout_gravity="center_horizontal"
+            android:id="@+id/deviceName" />
+
         <Button
             android:text="Look for Peers"
             android:layout_width="wrap_content"
