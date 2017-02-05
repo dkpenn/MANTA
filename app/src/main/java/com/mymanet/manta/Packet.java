@@ -2,21 +2,23 @@ package com.mymanet.manta;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
-/**
- * Created by PiaKochar on 1/15/17.
- */
+;
 
 abstract class Packet {
     String src;
     String filename;
     int timeToLive;
+    PacketType type;
 
-    Packet(String filename, int timeToLive, String src) {
+    Packet(String filename, int timeToLive, String src, PacketType type) {
         this.filename = filename;
         this.timeToLive = timeToLive;
         this.src = src;
+        this.type = type;
     }
 
     /**
@@ -34,6 +36,10 @@ abstract class Packet {
 
     String getFilename() { return this.filename; }
 
+    PacketType getPacketType() {return this.type; }
+
+    int getTimeToLive() { return this.timeToLive; }
+
     boolean isTtlZero() {
         return this.timeToLive == 0;
     }
@@ -50,4 +56,5 @@ abstract class Packet {
         // TODO implement
         return new File("hello");
     }
+
 }

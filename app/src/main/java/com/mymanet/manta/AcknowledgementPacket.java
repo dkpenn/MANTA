@@ -14,7 +14,7 @@ class AcknowledgementPacket extends Packet {
     List<String> path;
 
     AcknowledgementPacket(String filename, int timeToLive, String src, List<String> path) {
-        super(filename, timeToLive, src);
+        super(filename, timeToLive, src, PacketType.ACK);
         this.path = path;
     }
 
