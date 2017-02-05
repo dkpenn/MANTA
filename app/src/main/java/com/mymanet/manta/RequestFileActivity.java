@@ -363,6 +363,9 @@ public class RequestFileActivity extends AppCompatActivity {
     /**
      * client side of connection
      */
+    // receive request packet and parse it
+    // if contains the file, send back acknowledgement
+    // if not, repeat process
     // TODO sender of file (request)
     // turn request packet into a file
     // send request to each other device
@@ -535,24 +538,24 @@ public class RequestFileActivity extends AppCompatActivity {
             Toast.makeText(context, text, duration).show();
         }
 
-        protected void onPostExecute() {
+        @Override
+        protected void onPostExecute(String results) {
             Context context = getApplicationContext();
             CharSequence text = "Sent";
             int duration = Toast.LENGTH_SHORT;
             Toast.makeText(context, text, duration).show();
             Intent intent = new Intent(context, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(intent);
         }
 
     }
 
     /**
-     * server side of connection
+     * server side of connection -
+     * sender of various packets
      */
-    // TODO receiver of file (request)
-    // receive request packet and parse it
-    // if contains the file, send back acknowledgement
-    // if not, repeat process
+
     class OFileServerAsyncTask extends AsyncTask<Void, Void, String> {
 
         private Context context;
@@ -716,12 +719,14 @@ public class RequestFileActivity extends AppCompatActivity {
             Toast.makeText(context, text, duration).show();
         }
 
-        protected void onPostExecute() {
+        @Override
+        protected void onPostExecute(String results) {
             Context context = getApplicationContext();
             CharSequence text = "Sent";
             int duration = Toast.LENGTH_SHORT;
             Toast.makeText(context, text, duration).show();
             Intent intent = new Intent(context, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(intent);
 
         }
