@@ -42,6 +42,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 
 public class RequestFileActivity extends AppCompatActivity {
@@ -55,8 +56,9 @@ public class RequestFileActivity extends AppCompatActivity {
     WifiP2pManager.PeerListListener mPeerListListener;
     WifiP2pManager.ConnectionInfoListener mConnectionInfoListener;
     IntentFilter mIntentFilter;
-    RequestPacket packet;
     String mDeviceName;
+    Packet packet;
+//    List<Packet> packets; // packets that need to be processed
 
     Handler mBroadcastHandler;
 
@@ -64,6 +66,7 @@ public class RequestFileActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+//        packets = new ArrayList<>();
         System.out.println("onCreate entered");
         setContentView(R.layout.activity_request_file);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -171,7 +174,6 @@ public class RequestFileActivity extends AppCompatActivity {
         new RequestFileActivity.OFileClientAsyncTask().execute(addresses);
     }
 
-    // TODO needed? - yes I Believe so
     /* register the broadcast receiver with the intent values to be matched */
     @Override
     protected void onResume() {
@@ -198,7 +200,7 @@ public class RequestFileActivity extends AppCompatActivity {
         String uid = tManager.getDeviceId();
 
         Context context = getApplicationContext();
-        packet = new RequestPacket(filename, TIME_TO_LIVE, mDeviceName);
+        packet = new Packet(filename, TIME_TO_LIVE, mDeviceName, PacketType.REQUEST);
         packet.addToPath(mDeviceName);
 
 //        if (containsFile()) {
@@ -421,15 +423,14 @@ public class RequestFileActivity extends AppCompatActivity {
                 Log.e("client", packetTypeString);
                 PacketType packetType = PacketType.fromInt(Integer.parseInt(packetTypeString));
 
-                Packet pkt;
-                RequestPacket rp = null;
+                Packet pkt = null;
                 switch(packetType) {
                     case REQUEST:
                         String srcDevice = in.readLine();
                         String packetFileName = in.readLine();
                         int ttl = Integer.parseInt(in.readLine());
                         String path = in.readLine();
-                        rp = new RequestPacket(packetFileName, ttl, srcDevice, path);
+                        pkt = new Packet(packetFileName, ttl, srcDevice, packetType, path);
                         final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
                                 "hey.txt");
                         f.createNewFile();
@@ -447,7 +448,6 @@ public class RequestFileActivity extends AppCompatActivity {
 
                 //inputStream = cr.openInputStream(Uri.parse("/storage/emulated/0/DCIM/Camera/Desk.jpg"));
 //                File root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-                //RequestPacket packet = RequestFileActivity.this.packet;
 
 //                // TODO if packet hasn't been initialized by this point is that bad? async?
 //                if (packet == null) {
@@ -475,8 +475,8 @@ public class RequestFileActivity extends AppCompatActivity {
                 //outputStream.close();
                 //inputStream.close();
                 String file;
-                if(rp != null) {
-                    file = rp.getFilename();
+                if(pkt != null) {
+                    file = pkt.getFilename();
                 }
                 else {
                     file = "whatup.txt";
