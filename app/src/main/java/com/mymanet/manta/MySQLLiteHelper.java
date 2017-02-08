@@ -16,20 +16,51 @@ import java.util.List;
  * http://hmkcode.com/android-simple-sqlite-database-tutorial/
  */
 
-public class MySQLLiteHelper extends SQLiteOpenHelper {
+class MySQLLiteHelper extends SQLiteOpenHelper {
 
-    public static final String TABLE_FILES = "files";
-    public static final String COLUMN_ID = "id";
-    public static final String COLUMN_FILENAME = "filename";
-
-    public static final String DATABASE_NAME = "filenames.db";
+    // database constants
+    private static final String DATABASE_NAME = "filenames.db";
     private static final int DATABASE_VERSION = 1;
 
-    //Database creation sql statement
-    private static final String DATABASE_CREATE = "create table " +
-            TABLE_FILES + "( " + COLUMN_ID + " integer primary key autoincrement, " + COLUMN_FILENAME + " text not null);";
+    // tables
 
-    public MySQLLiteHelper(Context context) {
+    // keeps track of files available to the application
+    private static final String TABLE_FILES = "files";
+    private static final String COLUMN_ID = "id";
+    private static final String COLUMN_FILENAME = "filename";
+    private static final String FILES_CREATE = "create table " + TABLE_FILES + "( " + COLUMN_ID +
+            " integer primary key autoincrement, " + COLUMN_FILENAME + " text not null);";
+
+    // used by source node to keep track of status of a request
+    private static final String TABLE_REQUEST = "request";
+    private static final String COLUMN_STATUS = "status";
+    private static final String REQUEST_CREATE = "create table " + TABLE_REQUEST + "( " +
+            COLUMN_FILENAME + " text primary key, " + COLUMN_STATUS + " integer);";
+
+    // used by file owner to keep track of what responses it's sent
+    private static final String TABLE_RESPONSE = "response";
+    private static final String COLUMN_SRC = "src";
+    private static final String RESPONSE_CREATE = "create table " + TABLE_RESPONSE + "( " +
+            COLUMN_FILENAME + " text primary key, " + COLUMN_SRC + " text primary key, " +
+            COLUMN_STATUS + " integer);";
+
+    // stores device names trusted by this device
+    private static final String TABLE_TRUSTED = "trusted";
+    private static final String COLUMN_DEVICE = "device";
+    private static final String TRUSTED_CREATE = "create table " + TABLE_TRUSTED + "( " +
+            COLUMN_DEVICE + " text primary key);";
+
+    // used by transit nodes to keep track of requests that have been seen
+    private static final String TABLE_FILTER = "filter";
+    private static final String FILTER_CREATE = "create table " + TABLE_FILTER + "( " +
+            COLUMN_FILENAME + " text primary key, " + COLUMN_SRC + " text primary key);";
+
+
+    //Database creation sql statement
+    private static final String DATABASE_CREATE =
+            FILES_CREATE + REQUEST_CREATE + RESPONSE_CREATE + TRUSTED_CREATE + FILTER_CREATE;
+
+    MySQLLiteHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
@@ -43,10 +74,16 @@ public class MySQLLiteHelper extends SQLiteOpenHelper {
         Log.w(MySQLLiteHelper.class.getName(),
                 "Upgrading database from version " + oldVersion + " to "
                         + newVersion + ", which will destroy all old data");
-        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_FILES);
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_FILES + ";");
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_REQUEST + ";");
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_RESPONSE + ";");
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_FILTER + ";");
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_TRUSTED + ";");
         onCreate(sqLiteDatabase);
 
     }
+
+    // **** FILES TABLE FUNCTIONS ****
 
     //CRUD for File names
     public void addFile(MantaFile file) {
@@ -152,7 +189,8 @@ public class MySQLLiteHelper extends SQLiteOpenHelper {
         List<MantaFile> files = new LinkedList<MantaFile>();
 
         // 1. build the query
-        String query = "SELECT * FROM "  + TABLE_FILES + " WHERE " + COLUMN_FILENAME + "= " + "\"" + name + "\"";
+        String query = "SELECT * FROM "  + TABLE_FILES + " WHERE " + COLUMN_FILENAME +
+                "= " + "\"" + name + "\";";
         // 2. get reference to writable DB
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery(query, null);
@@ -167,6 +205,95 @@ public class MySQLLiteHelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
         Log.d("getAllBooks()", files.toString());
+        cursor.close();
         return files;
+    }
+
+
+    // **** REQUEST TABLE FUNCTIONS ****
+
+    /**
+     * Checks if request has previously been made by this device
+     * @param filename requested file
+     * @return success
+     */
+    boolean requestMade(String filename) {
+        String query = "SELECT * FROM " + TABLE_REQUEST + " WHERE " + COLUMN_FILENAME + "= " +
+                "\"" + filename + "\";";
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(query, null);
+        boolean exists = cursor.moveToFirst();
+        cursor.close();
+        return exists;
+    }
+
+    /**
+     * Update status of request
+     *      0 = REQ
+     *      1 = ACK
+     *      2 = FILE
+     * @return success
+     */
+    boolean updateRequest() {
+
+    }
+
+    /**
+     * Record new request made
+     * @return success
+     */
+    boolean addRequest() {
+
+    }
+    // **** RESPONSE TABLE FUNCTIONS ****
+
+    /**
+     * Record new request seen
+     * @return success
+     */
+    boolean addResponse() {
+
+    }
+
+    /**
+     * Update request status
+     *      0 = ACK
+     *      1 = SEND
+     * @return success
+     */
+    boolean updateResponse() {
+
+    }
+
+    // **** FILTER TABLE FUNCTIONS ****
+
+    /**
+     * checks if a request has already passed through this node
+     * @return result
+     */
+    boolean requestSeen(String filename, String src) {
+        String query = "SELECT * FROM " + TABLE_FILTER + " WHERE " + COLUMN_FILENAME + "= " +
+                "\"" + filename + "\" AND " + COLUMN_SRC + "= \"" + src + "\";";
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(query, null);
+        boolean exists = cursor.moveToFirst();
+        cursor.close();
+        return exists;
+    }
+
+    // **** TRUSTED TABLE FUNCTIONS ****
+
+    /**
+     * checks if a device is trusted by this node
+     * @return result
+     */
+    boolean isTrusted(String device) {
+        String query = "SELECT * FROM " + TABLE_TRUSTED + " WHERE " + COLUMN_DEVICE + "= " +
+                "\"" + device + "\";";
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(query, null);
+        boolean exists = cursor.moveToFirst();
+        cursor.close();
+        return exists;
     }
 }
