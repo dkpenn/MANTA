@@ -232,37 +232,48 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
      *      0 = REQ
      *      1 = ACK
      *      2 = FILE
-     * @return success
      */
-    boolean updateRequest() {
-
+    void updateRequest(String filename, int status) {
+        String query = "UPDATE " + TABLE_REQUEST + " SET " + COLUMN_STATUS + "= " +
+                Integer.toString(status) + " WHERE " + COLUMN_FILENAME + "= \"" + filename + "\";";
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL(query);
     }
 
     /**
      * Record new request made
-     * @return success
      */
-    boolean addRequest() {
-
+    void addRequest(String filename, int status) {
+        String query = "INSERT INTO " + TABLE_REQUEST + " (" + COLUMN_FILENAME + ", " +
+                COLUMN_STATUS + ") VALUES " + "(\"" + filename + "\", " + Integer.toString(status) +
+                ");";
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL(query);
     }
     // **** RESPONSE TABLE FUNCTIONS ****
 
     /**
      * Record new request seen
-     * @return success
      */
-    boolean addResponse() {
-
+    void addResponse(String filename, String src, int status) {
+        String query = "INSERT INTO " + TABLE_REQUEST + " (" + COLUMN_FILENAME + ", " +
+                COLUMN_STATUS + ", " + COLUMN_SRC + ") VALUES " + "(\"" + filename + "\", " +
+                Integer.toString(status) + ", " + src + ");";
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL(query);
     }
 
     /**
      * Update request status
      *      0 = ACK
      *      1 = SEND
-     * @return success
      */
-    boolean updateResponse() {
-
+    void updateResponse(String filename, String src, int status) {
+        String query = "UPDATE " + TABLE_RESPONSE + " SET " + COLUMN_STATUS + "= " +
+                Integer.toString(status) + " WHERE " + COLUMN_FILENAME + "= \"" + filename + "\" " +
+                "AND " + COLUMN_SRC + "= \"" + src + "\";";
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL(query);
     }
 
     // **** FILTER TABLE FUNCTIONS ****
