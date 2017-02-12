@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -55,10 +56,17 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
     private static final String FILTER_CREATE = "create table " + TABLE_FILTER + "( " +
             COLUMN_FILENAME + " text primary key, " + COLUMN_SRC + " text primary key);";
 
+    // keeps track of packets and which recipients they need to be sent to
+    private static final String TABLE_SEND = "send";
+    private static final String COLUMN_PACKET = "packet";
+    private static final String COLUMN_TARGET = "target";
+    private static final String SEND_CREATE = "create table " + TABLE_SEND + "( " +
+            COLUMN_PACKET + " text primary key, " + COLUMN_TARGET + " text primary key);";
 
     //Database creation sql statement
     private static final String DATABASE_CREATE =
-            FILES_CREATE + REQUEST_CREATE + RESPONSE_CREATE + TRUSTED_CREATE + FILTER_CREATE;
+            FILES_CREATE + REQUEST_CREATE + RESPONSE_CREATE + TRUSTED_CREATE + FILTER_CREATE +
+            SEND_CREATE;
 
     MySQLLiteHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -185,6 +193,16 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
         return files;
     }
 
+    boolean containsFile(String filename) {
+        List<String> files = getAllFileNames();
+        for (String file : files) {
+            if (file.equals(filename)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public List<MantaFile> getFilesWithName(String name) {
         List<MantaFile> files = new LinkedList<MantaFile>();
 
@@ -254,11 +272,12 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
 
     /**
      * Record new request seen
+     * Assume the status is 0 since this is the first time it's been seen
      */
-    void addResponse(String filename, String src, int status) {
+    void addResponse(String filename, String src) {
         String query = "INSERT INTO " + TABLE_REQUEST + " (" + COLUMN_FILENAME + ", " +
                 COLUMN_STATUS + ", " + COLUMN_SRC + ") VALUES " + "(\"" + filename + "\", " +
-                Integer.toString(status) + ", " + src + ");";
+                Integer.toString(0) + ", \"" + src + "\");";
         SQLiteDatabase db = this.getWritableDatabase();
         db.execSQL(query);
     }
@@ -292,6 +311,13 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
         return exists;
     }
 
+    void addFilterRequest(String filename, String src) {
+        String query = "INSERT INTO " + TABLE_FILTER + " ( " + COLUMN_FILENAME + ", " + COLUMN_SRC +
+                ") VALUES (\"" + filename + "\", \"" + src + "\");";
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL(query);
+    }
+
     // **** TRUSTED TABLE FUNCTIONS ****
 
     /**
@@ -307,4 +333,25 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
         cursor.close();
         return exists;
     }
+
+    List<String> getTrustedPeers() {
+        List<String> devices = new ArrayList<>();
+        String query = "SELECT * FROM " + TABLE_TRUSTED + ";";
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(query, null);
+        if (cursor.moveToFirst()) {
+            do {
+                devices.add(cursor.getString(0));
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return devices;
+    }
+
+    // **** SEND TABLE FUNCTIONS ****
+
+    // TODO void removePacket(String packet, String target)
+    // TODO String getNextPacket()
+    // TODO void addPacket(String packet, String target)
+
 }

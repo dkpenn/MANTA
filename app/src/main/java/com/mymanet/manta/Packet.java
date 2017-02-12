@@ -63,6 +63,8 @@ class Packet {
         this.path.add(node);
     }
 
+    void changePacketType(PacketType type) { this.type = type; }
+
     private List<String> toListOfNodes(String path) {
         return new ArrayList<String>(Arrays.asList(path.split("\t")));
     }

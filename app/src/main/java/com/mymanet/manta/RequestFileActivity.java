@@ -57,6 +57,7 @@ public class RequestFileActivity extends AppCompatActivity {
     WifiP2pManager.ConnectionInfoListener mConnectionInfoListener;
     IntentFilter mIntentFilter;
     String mDeviceName;
+    String toConnectDevice;
     Packet packet;
 //    List<Packet> packets; // packets that need to be processed
 
@@ -83,6 +84,10 @@ public class RequestFileActivity extends AppCompatActivity {
 
         packet = null;
         mDeviceName = getHostName("");
+
+        // TODO don't hard code toConnectDevice value
+        toConnectDevice = "Pia";
+
         mEdit = (EditText)findViewById(R.id.requested_file);
 
         mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
@@ -122,7 +127,8 @@ public class RequestFileActivity extends AppCompatActivity {
         //mBroadcastHandler = new Handler();
         //mBroadcastHandler.postDelayed(mServiceBroadcastingRunnable, 1000);
 
-        mReceiver = new WifiDirectBroadcastReceiver(mManager, mChannel,this, mPeerListListener, mConnectionInfoListener);
+        mReceiver = new WifiDirectBroadcastReceiver(mManager, mChannel,this, mPeerListListener,
+                mConnectionInfoListener);
 
         mIntentFilter = new IntentFilter();
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
@@ -195,34 +201,28 @@ public class RequestFileActivity extends AppCompatActivity {
     public void requestByFilename(View view) {
         String filename = mEdit.getText().toString();
 
-        // get request src id
-        TelephonyManager tManager = (TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
-        String uid = tManager.getDeviceId();
+        // if file exists locally, terminate request
+        if (containsFile(filename)) {
+            Context context = getApplicationContext();
+            CharSequence text = "Requested file exists on this device";
+            int duration = Toast.LENGTH_SHORT;
+            Toast.makeText(context, text, duration).show();
+            // TODO move to next request
+            return;
+        }
 
-        Context context = getApplicationContext();
         packet = new Packet(filename, TIME_TO_LIVE, mDeviceName, PacketType.REQUEST);
-        packet.addToPath(mDeviceName);
-
-//        if (containsFile()) {
-//            Context context = getApplicationContext();
-//            CharSequence text = "Requested file exists on this device";
-//            int duration = Toast.LENGTH_SHORT;
-//            Toast.makeText(context, text, duration).show();
-//            return;
-//        }
+//        packet.addToPath(mDeviceName);
 
         setContentView(R.layout.activity_propagate_request);
 
-        propagateRequest();
-    }
-
-    public void propagateRequest() {
         lookForPeers();
     }
 
-    public boolean containsFile() {
-        // TODO implement
-        return false;
+    public boolean containsFile(String filename) {
+        Context context = getApplicationContext();
+        final MySQLLiteHelper db = new MySQLLiteHelper(context);
+        return db.containsFile(filename);
     }
 
     public void lookForPeers() {
@@ -230,7 +230,6 @@ public class RequestFileActivity extends AppCompatActivity {
 
             @Override
             public void onSuccess() {
-                // TODO decide on success scenario
                 Context context = getApplicationContext();
                 CharSequence text = "Discovery succeeded";
                 int duration = Toast.LENGTH_SHORT;
@@ -258,23 +257,20 @@ public class RequestFileActivity extends AppCompatActivity {
      */
     public void connectToFirstDevice(WifiP2pDeviceList deviceList) {
 
-        //System.out.println("Trying to connect to a device...");
         // get first device
         WifiP2pDevice firstDevice = null;
 
         for(WifiP2pDevice device : deviceList.getDeviceList())
         {
             firstDevice = device;
-            if(device.deviceName.equals("SIRIUS")) {
-                //System.out.println("Connecting to device named " + device.deviceName);
+//            System.out.println("to connect device: " + this.toConnectDevice);
+            if(device.deviceName.equals(this.toConnectDevice)) {
                 break;
             }
         }
 
         // connect to device
         if(firstDevice != null) {
-            //System.out.println("Primary device type: ");
-            //System.out.println(firstDevice.primaryDeviceType);
 
             WifiP2pConfig config = new WifiP2pConfig();
             config.deviceAddress = firstDevice.deviceAddress;
@@ -300,39 +296,6 @@ public class RequestFileActivity extends AppCompatActivity {
         }
     }
 
-//    public void connectToAllPeers(WifiP2pDeviceList deviceList) {
-//
-//        // TODO implement so this works
-//
-//        for (WifiP2pDevice device : deviceList.getDeviceList()) {
-//
-//            // connect to device
-//            if (device != null) {
-//                WifiP2pConfig config = new WifiP2pConfig();
-//                config.deviceAddress = device.deviceAddress;
-//                config.groupOwnerIntent = 15;
-//                mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
-//                    @Override
-//                    public void onSuccess() {
-//                        Context context = getApplicationContext();
-//                        CharSequence text = "Connection Successful: In Progress";
-//                        int duration = Toast.LENGTH_SHORT;
-//                        Toast.makeText(context, text, duration).show();
-//                    }
-//
-//                    @Override
-//                    public void onFailure(int i) {
-//                        Context context = getApplicationContext();
-//                        CharSequence text = "Connection Failed: In Progress";
-//                        int duration = Toast.LENGTH_SHORT;
-//                        Toast.makeText(context, text, duration).show();
-//                    }
-//                });
-//
-//            }
-//        }
-//    }
-
     /**
      * disconnect from stack overflow
      * http://stackoverflow.com/questions/18679481/wifi-direct-end-connection-to-peer-on-android
@@ -349,6 +312,12 @@ public class RequestFileActivity extends AppCompatActivity {
                             @Override
                             public void onSuccess() {
                                 Log.d("disconnect", "removeGroup onSuccess -");
+
+                                // TODO remove this
+                                Context context = getApplicationContext();
+                                CharSequence text = "Disconnected";
+                                int duration = Toast.LENGTH_SHORT;
+                                Toast.makeText(context, text, duration).show();
                             }
 
                             @Override
@@ -365,9 +334,6 @@ public class RequestFileActivity extends AppCompatActivity {
     /**
      * client side of connection
      */
-    // TODO sender of file (request)
-    // turn request packet into a file
-    // send request to each other device
     class OFileClientAsyncTask extends AsyncTask<InetAddress, Void, String> {
 
         private Context context;
@@ -386,7 +352,6 @@ public class RequestFileActivity extends AppCompatActivity {
 
             }
 
-//            android.os.Debug.waitForDebugger();
             System.out.println("client started");
 
             Context context = getApplicationContext();
@@ -399,8 +364,6 @@ public class RequestFileActivity extends AppCompatActivity {
             InputStream inputStream = null;
             InputStream fileInputStream = null;
             PrintWriter out = null;
-
-            // TODO check if request has been seen before; if so, ignore it
 
             try {
                 /** Create a client socket with the host, port and timeout information
@@ -424,13 +387,41 @@ public class RequestFileActivity extends AppCompatActivity {
                 PacketType packetType = PacketType.fromInt(Integer.parseInt(packetTypeString));
 
                 Packet pkt = null;
+                System.out.println("got packet");
                 switch(packetType) {
                     case REQUEST:
                         String srcDevice = in.readLine();
-                        String packetFileName = in.readLine();
+                        String filename = in.readLine();
                         int ttl = Integer.parseInt(in.readLine());
                         String path = in.readLine();
-                        pkt = new Packet(packetFileName, ttl, srcDevice, packetType, path);
+                        pkt = new Packet(filename, ttl, srcDevice, packetType, path);
+
+                        System.out.println("request packet for: " + filename + " from: " + srcDevice);
+                        // if request has been seen before, ignore it, otherwise record it
+                        final MySQLLiteHelper db = new MySQLLiteHelper(context);
+                        if (db.requestSeen(filename, srcDevice)) {
+                            break;
+                        } else {
+                            db.addFilterRequest(filename, srcDevice);
+                        }
+
+                        RequestFileActivity.this.packet.addToPath(RequestFileActivity.this.mDeviceName);
+
+                        if (containsFile(filename)) {
+                            System.out.println("to connect device: " +
+                                    RequestFileActivity.this.toConnectDevice + "\nthis device: " +
+                                    RequestFileActivity.this.mDeviceName + "\nsrc: " + srcDevice);
+                            System.out.println("found file: " +
+                                    filename);
+                            RequestFileActivity.this.packet.changePacketType(PacketType.ACK);
+                            sendAck(srcDevice);
+                            db.addResponse(filename, srcDevice);
+
+                        } else {
+                            // TODO uncomment
+//                            broadcastRequest(srcDevice);
+                        }
+
                         final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
                                 "hey.txt");
                         f.createNewFile();
@@ -443,37 +434,6 @@ public class RequestFileActivity extends AppCompatActivity {
                         break;
                 }
 
-//                ContentResolver cr = context.getContentResolver();
-//                fileInputStream = null;
-
-                //inputStream = cr.openInputStream(Uri.parse("/storage/emulated/0/DCIM/Camera/Desk.jpg"));
-//                File root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-
-//                // TODO if packet hasn't been initialized by this point is that bad? async?
-//                if (packet == null) {
-//                    CharSequence text = "Request Error";
-//                    int duration = Toast.LENGTH_SHORT;
-//                    Toast.makeText(context, text, duration).show();
-//                }
-//
-//                System.out.println("sending filename");
-//
-//                String path = "file:////" + root.getAbsolutePath() + packet.getFilename();
-//
-//                //first print out the filename
-//                out = new PrintWriter(outputStream, true);
-//                out.println(path);
-//
-//                inputStream = cr.openInputStream(Uri.parse(path));
-//
-//                while((len = inputStream.read(buf)) != -1) {
-//                    outputStream.write(buf, 0, len);
-//                }
-//
-//                System.out.println("filename sent");
-
-                //outputStream.close();
-                //inputStream.close();
                 String file;
                 if(pkt != null) {
                     file = pkt.getFilename();
@@ -528,6 +488,35 @@ public class RequestFileActivity extends AppCompatActivity {
             return null;
         }
 
+        void broadcastRequest(String src) {
+            final MySQLLiteHelper db = new MySQLLiteHelper(context);
+            List<String> peers = db.getTrustedPeers();
+            disconnect();
+            lookForPeers();
+            // TODO broadcast to friends (not sender)
+        }
+
+        /**
+         * send ACK backwards through network
+         * @param src device REQ came from, and ACK should go to
+         */
+        void sendAck(String src) {
+            disconnect();
+            RequestFileActivity.this.toConnectDevice = src;
+            lookForPeers();
+
+            String file = "ackSent";
+
+            final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+                    file);
+
+            try {
+                f.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         protected void onProgressUpdate() {
             Context context = getApplicationContext();
             CharSequence text = "Sending...";
@@ -549,10 +538,6 @@ public class RequestFileActivity extends AppCompatActivity {
     /**
      * server side of connection
      */
-    // TODO receiver of file (request)
-    // receive request packet and parse it
-    // if contains the file, send back acknowledgement
-    // if not, repeat process
     class OFileServerAsyncTask extends AsyncTask<Void, Void, String> {
 
         private Context context;
@@ -566,7 +551,6 @@ public class RequestFileActivity extends AppCompatActivity {
 
             if(android.os.Debug.isDebuggerConnected())
                 android.os.Debug.waitForDebugger();
-//            android.os.Debug.waitForDebugger();
 
             /** Create a server socket and wait for client connections. This
              * call blocks until a connection is accepted from a client
@@ -578,10 +562,6 @@ public class RequestFileActivity extends AppCompatActivity {
             InputStream inputStream = null;
 
             try {
-//                Context context = getApplicationContext();
-//                CharSequence text = "connected - server";
-//                int duration = Toast.LENGTH_SHORT;
-//                Toast.makeText(context, text, duration).show();
 
                 serverSocket = new ServerSocket(8888);
 
