@@ -86,7 +86,7 @@ public class RequestFileActivity extends AppCompatActivity {
         mDeviceName = getHostName("");
 
         // TODO don't hard code toConnectDevice value
-        toConnectDevice = "Pia";
+        toConnectDevice = "SIRIUS";
 
         mEdit = (EditText)findViewById(R.id.requested_file);
 
@@ -494,6 +494,8 @@ public class RequestFileActivity extends AppCompatActivity {
             disconnect();
             lookForPeers();
             // TODO broadcast to friends (not sender)
+            // here just broadcasting to one friend
+            RequestFileActivity.this.toConnectDevice = "Pia";
         }
 
         /**
