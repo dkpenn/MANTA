@@ -262,12 +262,14 @@ public class RequestFileActivity extends AppCompatActivity {
 
         for(WifiP2pDevice device : deviceList.getDeviceList())
         {
-            firstDevice = device;
 //            System.out.println("to connect device: " + this.toConnectDevice);
             if(device.deviceName.equals(this.toConnectDevice)) {
+                firstDevice = device;
                 break;
             }
         }
+
+        if (firstDevice == null) { return; }
 
         // connect to device
         if(firstDevice != null) {
