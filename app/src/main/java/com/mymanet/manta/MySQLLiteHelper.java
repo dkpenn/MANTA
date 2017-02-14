@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -16,26 +17,69 @@ import java.util.List;
  * http://hmkcode.com/android-simple-sqlite-database-tutorial/
  */
 
-public class MySQLLiteHelper extends SQLiteOpenHelper {
+class MySQLLiteHelper extends SQLiteOpenHelper {
 
-    public static final String TABLE_FILES = "files";
-    public static final String COLUMN_ID = "id";
-    public static final String COLUMN_FILENAME = "filename";
+    // database constants
+    private static final String DATABASE_NAME = "filenames.db";
+    private static final int DATABASE_VERSION = 2; // UPDATE every time db is updated
 
-    public static final String DATABASE_NAME = "filenames.db";
-    private static final int DATABASE_VERSION = 1;
+    // tables
+
+    // keeps track of files available to the application
+    private static final String TABLE_FILES = "files";
+    private static final String COLUMN_ID = "id";
+    private static final String COLUMN_FILENAME = "filename";
+    private static final String FILES_CREATE = "create table " + TABLE_FILES + " (" + COLUMN_ID +
+            " integer primary key autoincrement, " + COLUMN_FILENAME + " text not null);";
+
+    // used by source node to keep track of status of a request
+    private static final String TABLE_REQUEST = "request";
+    private static final String COLUMN_STATUS = "status";
+    private static final String REQUEST_CREATE = "create table " + TABLE_REQUEST + " (" +
+            COLUMN_FILENAME + " text primary key, " + COLUMN_STATUS + " integer);";
+
+    // used by file owner to keep track of what responses it's sent
+    private static final String TABLE_RESPONSE = "response";
+    private static final String COLUMN_SRC = "src";
+    private static final String RESPONSE_CREATE = "create table " + TABLE_RESPONSE + " (" +
+            COLUMN_FILENAME + " text primary key, " + COLUMN_SRC + " text primary key, " +
+            COLUMN_STATUS + " integer);";
+
+    // stores device names trusted by this device
+    private static final String TABLE_TRUSTED = "trusted";
+    private static final String COLUMN_DEVICE = "device";
+    private static final String TRUSTED_CREATE = "create table " + TABLE_TRUSTED + " (" +
+            COLUMN_DEVICE + " text primary key);";
+
+    // used by transit nodes to keep track of requests that have been seen
+    private static final String TABLE_FILTER = "filter";
+    private static final String FILTER_CREATE = "create table " + TABLE_FILTER + " (" +
+            COLUMN_FILENAME + " text primary key, " + COLUMN_SRC + " text primary key);";
+
+    // keeps track of packets and which recipients they need to be sent to
+    private static final String TABLE_SEND = "send";
+    private static final String COLUMN_PACKET = "packet";
+    private static final String COLUMN_TARGET = "target";
+    private static final String SEND_CREATE = "create table " + TABLE_SEND + " (" +
+            COLUMN_PACKET + " text primary key, " + COLUMN_TARGET + " text primary key);";
 
     //Database creation sql statement
-    private static final String DATABASE_CREATE = "create table " +
-            TABLE_FILES + "( " + COLUMN_ID + " integer primary key autoincrement, " + COLUMN_FILENAME + " text not null);";
+    private static final String DATABASE_CREATE =
+            FILES_CREATE + REQUEST_CREATE + RESPONSE_CREATE + TRUSTED_CREATE + FILTER_CREATE +
+            SEND_CREATE;
 
-    public MySQLLiteHelper(Context context) {
+    MySQLLiteHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
-        sqLiteDatabase.execSQL(DATABASE_CREATE);
+        sqLiteDatabase.execSQL(FILES_CREATE);
+        sqLiteDatabase.execSQL(REQUEST_CREATE);
+        sqLiteDatabase.execSQL(RESPONSE_CREATE);
+        sqLiteDatabase.execSQL(TRUSTED_CREATE);
+        sqLiteDatabase.execSQL(FILTER_CREATE);
+        sqLiteDatabase.execSQL(SEND_CREATE);
     }
 
     @Override
@@ -43,10 +87,16 @@ public class MySQLLiteHelper extends SQLiteOpenHelper {
         Log.w(MySQLLiteHelper.class.getName(),
                 "Upgrading database from version " + oldVersion + " to "
                         + newVersion + ", which will destroy all old data");
-        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_FILES);
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_FILES + ";");
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_REQUEST + ";");
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_RESPONSE + ";");
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_FILTER + ";");
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_TRUSTED + ";");
         onCreate(sqLiteDatabase);
 
     }
+
+    // **** FILES TABLE FUNCTIONS ****
 
     //CRUD for File names
     public void addFile(MantaFile file) {
@@ -148,11 +198,22 @@ public class MySQLLiteHelper extends SQLiteOpenHelper {
         return files;
     }
 
+    boolean containsFile(String filename) {
+        List<String> files = getAllFileNames();
+        for (String file : files) {
+            if (file.equals(filename)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public List<MantaFile> getFilesWithName(String name) {
         List<MantaFile> files = new LinkedList<MantaFile>();
 
         // 1. build the query
-        String query = "SELECT * FROM "  + TABLE_FILES + " WHERE " + COLUMN_FILENAME + "= " + "\"" + name + "\"";
+        String query = "SELECT * FROM "  + TABLE_FILES + " WHERE " + COLUMN_FILENAME +
+                "= " + "\"" + name + "\";";
         // 2. get reference to writable DB
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery(query, null);
@@ -167,6 +228,135 @@ public class MySQLLiteHelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
         Log.d("getAllBooks()", files.toString());
+        cursor.close();
         return files;
     }
+
+
+    // **** REQUEST TABLE FUNCTIONS ****
+
+    /**
+     * Checks if request has previously been made by this device
+     * @param filename requested file
+     * @return success
+     */
+    boolean requestMade(String filename) {
+        String query = "SELECT * FROM " + TABLE_REQUEST + " WHERE " + COLUMN_FILENAME + "= " +
+                "\"" + filename + "\";";
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(query, null);
+        boolean exists = cursor.moveToFirst();
+        cursor.close();
+        return exists;
+    }
+
+    /**
+     * Update status of request
+     *      0 = REQ
+     *      1 = ACK
+     *      2 = FILE
+     */
+    void updateRequest(String filename, int status) {
+        String query = "UPDATE " + TABLE_REQUEST + " SET " + COLUMN_STATUS + "= " +
+                Integer.toString(status) + " WHERE " + COLUMN_FILENAME + "= \"" + filename + "\";";
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL(query);
+    }
+
+    /**
+     * Record new request made
+     */
+    void addRequest(String filename, int status) {
+        String query = "INSERT INTO " + TABLE_REQUEST + " (" + COLUMN_FILENAME + ", " +
+                COLUMN_STATUS + ") VALUES " + "(\"" + filename + "\", " + Integer.toString(status) +
+                ");";
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL(query);
+    }
+    // **** RESPONSE TABLE FUNCTIONS ****
+
+    /**
+     * Record new request seen
+     * Assume the status is 0 since this is the first time it's been seen
+     */
+    void addResponse(String filename, String src) {
+        String query = "INSERT INTO " + TABLE_REQUEST + " (" + COLUMN_FILENAME + ", " +
+                COLUMN_STATUS + ", " + COLUMN_SRC + ") VALUES " + "(\"" + filename + "\", " +
+                Integer.toString(0) + ", \"" + src + "\");";
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL(query);
+    }
+
+    /**
+     * Update request status
+     *      0 = ACK
+     *      1 = SEND
+     */
+    void updateResponse(String filename, String src, int status) {
+        String query = "UPDATE " + TABLE_RESPONSE + " SET " + COLUMN_STATUS + "= " +
+                Integer.toString(status) + " WHERE " + COLUMN_FILENAME + "= \"" + filename + "\" " +
+                "AND " + COLUMN_SRC + "= \"" + src + "\";";
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL(query);
+    }
+
+    // **** FILTER TABLE FUNCTIONS ****
+
+    /**
+     * checks if a request has already passed through this node
+     * @return result
+     */
+    boolean requestSeen(String filename, String src) {
+        String query = "SELECT * FROM " + TABLE_FILTER + " WHERE " + COLUMN_FILENAME + "= " +
+                "\"" + filename + "\" AND " + COLUMN_SRC + "= \"" + src + "\";";
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(query, null);
+        boolean exists = cursor.moveToFirst();
+        cursor.close();
+        return exists;
+    }
+
+    void addFilterRequest(String filename, String src) {
+        String query = "INSERT INTO " + TABLE_FILTER + " ( " + COLUMN_FILENAME + ", " + COLUMN_SRC +
+                ") VALUES (\"" + filename + "\", \"" + src + "\");";
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL(query);
+    }
+
+    // **** TRUSTED TABLE FUNCTIONS ****
+
+    /**
+     * checks if a device is trusted by this node
+     * @return result
+     */
+    boolean isTrusted(String device) {
+        String query = "SELECT * FROM " + TABLE_TRUSTED + " WHERE " + COLUMN_DEVICE + "= " +
+                "\"" + device + "\";";
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(query, null);
+        boolean exists = cursor.moveToFirst();
+        cursor.close();
+        return exists;
+    }
+
+    List<String> getTrustedPeers() {
+        List<String> devices = new ArrayList<>();
+        String query = "SELECT * FROM " + TABLE_TRUSTED + ";";
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(query, null);
+        if (cursor.moveToFirst()) {
+            do {
+                devices.add(cursor.getString(0));
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return devices;
+    }
+
+    // **** SEND TABLE FUNCTIONS ****
+
+    // TODO void removePacket(String packet, String target)
+    // TODO String getNextPacket()
+    // TODO void addPacket(String packet, String target)
+
 }
