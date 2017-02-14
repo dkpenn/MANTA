@@ -21,7 +21,7 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
 
     // database constants
     private static final String DATABASE_NAME = "filenames.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2; // UPDATE every time db is updated
 
     // tables
 
@@ -29,38 +29,38 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
     private static final String TABLE_FILES = "files";
     private static final String COLUMN_ID = "id";
     private static final String COLUMN_FILENAME = "filename";
-    private static final String FILES_CREATE = "create table " + TABLE_FILES + "( " + COLUMN_ID +
+    private static final String FILES_CREATE = "create table " + TABLE_FILES + " (" + COLUMN_ID +
             " integer primary key autoincrement, " + COLUMN_FILENAME + " text not null);";
 
     // used by source node to keep track of status of a request
     private static final String TABLE_REQUEST = "request";
     private static final String COLUMN_STATUS = "status";
-    private static final String REQUEST_CREATE = "create table " + TABLE_REQUEST + "( " +
+    private static final String REQUEST_CREATE = "create table " + TABLE_REQUEST + " (" +
             COLUMN_FILENAME + " text primary key, " + COLUMN_STATUS + " integer);";
 
     // used by file owner to keep track of what responses it's sent
     private static final String TABLE_RESPONSE = "response";
     private static final String COLUMN_SRC = "src";
-    private static final String RESPONSE_CREATE = "create table " + TABLE_RESPONSE + "( " +
+    private static final String RESPONSE_CREATE = "create table " + TABLE_RESPONSE + " (" +
             COLUMN_FILENAME + " text primary key, " + COLUMN_SRC + " text primary key, " +
             COLUMN_STATUS + " integer);";
 
     // stores device names trusted by this device
     private static final String TABLE_TRUSTED = "trusted";
     private static final String COLUMN_DEVICE = "device";
-    private static final String TRUSTED_CREATE = "create table " + TABLE_TRUSTED + "( " +
+    private static final String TRUSTED_CREATE = "create table " + TABLE_TRUSTED + " (" +
             COLUMN_DEVICE + " text primary key);";
 
     // used by transit nodes to keep track of requests that have been seen
     private static final String TABLE_FILTER = "filter";
-    private static final String FILTER_CREATE = "create table " + TABLE_FILTER + "( " +
+    private static final String FILTER_CREATE = "create table " + TABLE_FILTER + " (" +
             COLUMN_FILENAME + " text primary key, " + COLUMN_SRC + " text primary key);";
 
     // keeps track of packets and which recipients they need to be sent to
     private static final String TABLE_SEND = "send";
     private static final String COLUMN_PACKET = "packet";
     private static final String COLUMN_TARGET = "target";
-    private static final String SEND_CREATE = "create table " + TABLE_SEND + "( " +
+    private static final String SEND_CREATE = "create table " + TABLE_SEND + " (" +
             COLUMN_PACKET + " text primary key, " + COLUMN_TARGET + " text primary key);";
 
     //Database creation sql statement
@@ -74,7 +74,12 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
-        sqLiteDatabase.execSQL(DATABASE_CREATE);
+        sqLiteDatabase.execSQL(FILES_CREATE);
+        sqLiteDatabase.execSQL(REQUEST_CREATE);
+        sqLiteDatabase.execSQL(RESPONSE_CREATE);
+        sqLiteDatabase.execSQL(TRUSTED_CREATE);
+        sqLiteDatabase.execSQL(FILTER_CREATE);
+        sqLiteDatabase.execSQL(SEND_CREATE);
     }
 
     @Override

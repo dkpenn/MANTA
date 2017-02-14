@@ -262,7 +262,7 @@ public class RequestFileActivity extends AppCompatActivity {
 
         for(WifiP2pDevice device : deviceList.getDeviceList())
         {
-//            System.out.println("to connect device: " + this.toConnectDevice);
+            System.out.println("to connect device: " + this.toConnectDevice);
             if(device.deviceName.equals(this.toConnectDevice)) {
                 firstDevice = device;
                 break;
@@ -421,7 +421,7 @@ public class RequestFileActivity extends AppCompatActivity {
 
                         } else {
                             // TODO uncomment
-//                            broadcastRequest(srcDevice);
+                            broadcastRequest(srcDevice);
                         }
 
                         final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
@@ -494,10 +494,11 @@ public class RequestFileActivity extends AppCompatActivity {
             final MySQLLiteHelper db = new MySQLLiteHelper(context);
             List<String> peers = db.getTrustedPeers();
             disconnect();
+            RequestFileActivity.this.toConnectDevice = "Pia";
+            System.out.println("BROADCAST: changed peer to connect to to be Pia");
             lookForPeers();
             // TODO broadcast to friends (not sender)
             // here just broadcasting to one friend
-            RequestFileActivity.this.toConnectDevice = "Pia";
         }
 
         /**
@@ -507,6 +508,8 @@ public class RequestFileActivity extends AppCompatActivity {
         void sendAck(String src) {
             disconnect();
             RequestFileActivity.this.toConnectDevice = src;
+            System.out.println("ACK: sending ack from " + RequestFileActivity.this.mDeviceName +
+                " to: " + src);
             lookForPeers();
 
             String file = "ackSent";
