@@ -49,7 +49,7 @@ public class UploadFileActivity extends AppCompatActivity {
         ListView listView = (ListView) findViewById(R.id.file_list);
         listView.setAdapter(imageNamesAdapter);
 
-        final MySQLLiteHelper db = new MySQLLiteHelper(this);
+        final MySQLLiteHelper db = MySQLLiteHelper.getHelper(this);
 
         //Set Action for when file is selected
         AdapterView.OnItemClickListener childClickedHandler = new AdapterView.OnItemClickListener() {

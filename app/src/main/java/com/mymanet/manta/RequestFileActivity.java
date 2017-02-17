@@ -220,8 +220,7 @@ public class RequestFileActivity extends AppCompatActivity {
     }
 
     public boolean containsFile(String filename) {
-        Context context = getApplicationContext();
-        final MySQLLiteHelper db = new MySQLLiteHelper(context);
+        MySQLLiteHelper db = MySQLLiteHelper.getHelper(this);
         return db.containsFile(filename);
     }
 
@@ -345,8 +344,9 @@ public class RequestFileActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(InetAddress[] params) {
 
-            if(android.os.Debug.isDebuggerConnected())
+            if(android.os.Debug.isDebuggerConnected()) {
                 android.os.Debug.waitForDebugger();
+            }
 
             /* busy wait to get server hopefully running */
             for(int i = 0; i < 1000; i++)
@@ -400,7 +400,7 @@ public class RequestFileActivity extends AppCompatActivity {
 
                         System.out.println("request packet for: " + filename + " from: " + srcDevice);
                         // if request has been seen before, ignore it, otherwise record it
-                        final MySQLLiteHelper db = new MySQLLiteHelper(context);
+                        final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
                         if (db.requestSeen(filename, srcDevice)) {
                             break;
                         } else {
@@ -482,21 +482,20 @@ public class RequestFileActivity extends AppCompatActivity {
                         ioex.printStackTrace();
                     }
                 }
+                disconnect();
 
             }
-
-            disconnect();
 
             return null;
         }
 
         void broadcastRequest(String src) {
-            final MySQLLiteHelper db = new MySQLLiteHelper(context);
+            Context context = getApplicationContext();
+            final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
             List<String> peers = db.getTrustedPeers();
-            disconnect();
             RequestFileActivity.this.toConnectDevice = "Pia";
             System.out.println("BROADCAST: changed peer to connect to to be Pia");
-            lookForPeers();
+            System.out.println("BROADCAST: changed peer to connect to to be Pia");
             // TODO broadcast to friends (not sender)
             // here just broadcasting to one friend
         }
@@ -506,11 +505,9 @@ public class RequestFileActivity extends AppCompatActivity {
          * @param src device REQ came from, and ACK should go to
          */
         void sendAck(String src) {
-            disconnect();
             RequestFileActivity.this.toConnectDevice = src;
             System.out.println("ACK: sending ack from " + RequestFileActivity.this.mDeviceName +
                 " to: " + src);
-            lookForPeers();
 
             String file = "ackSent";
 
@@ -536,8 +533,7 @@ public class RequestFileActivity extends AppCompatActivity {
             CharSequence text = "Sent";
             int duration = Toast.LENGTH_SHORT;
             Toast.makeText(context, text, duration).show();
-            Intent intent = new Intent(context, MainActivity.class);
-            context.startActivity(intent);
+            lookForPeers();
         }
 
     }
@@ -648,8 +644,6 @@ public class RequestFileActivity extends AppCompatActivity {
                 if(out != null) {
                     out.close();
                 }
-                /* end connection with device */
-                disconnect();
                 /* Stop Peer discovery if it is still going */
                 mManager.stopPeerDiscovery(mChannel, new WifiP2pManager.ActionListener() {
                     @Override
@@ -682,7 +676,7 @@ public class RequestFileActivity extends AppCompatActivity {
          */
         private boolean returnFile(String filename) {
             Context context = getApplicationContext();
-            final MySQLLiteHelper db = new MySQLLiteHelper(context);
+            final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
             List<MantaFile> files = db.getFilesWithName(filename);
             MantaFile toSend = null;
             if (files.isEmpty()) {

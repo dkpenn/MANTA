@@ -44,13 +44,13 @@ public class MyFilesActivity extends AppCompatActivity {
     }
 
     public void deleteAll(View view) {
-        MySQLLiteHelper db = new MySQLLiteHelper(this);
+        MySQLLiteHelper db = MySQLLiteHelper.getHelper(this);
         db.deleteAllFiles();
         refreshListView();
     }
 
     private void refreshListView() {
-        final MySQLLiteHelper db = new MySQLLiteHelper(this);
+        final MySQLLiteHelper db = MySQLLiteHelper.getHelper(this);
 
         List<String> files = db.getAllFileNames();
         final ArrayAdapter<String> imageNamesAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, files);
