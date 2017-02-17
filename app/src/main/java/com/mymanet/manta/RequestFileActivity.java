@@ -235,8 +235,7 @@ public class RequestFileActivity extends AppCompatActivity {
     }
 
     public boolean containsFile(String filename) {
-        Context context = getApplicationContext();
-        final MySQLLiteHelper db = new MySQLLiteHelper(context);
+        MySQLLiteHelper db = MySQLLiteHelper.getHelper(this);
         return db.containsFile(filename);
     }
 
@@ -461,7 +460,7 @@ public class RequestFileActivity extends AppCompatActivity {
                         System.out.println("request packet for: " + filename + " from: " + srcDevice);
                         progress = "received packet";
                         // if request has been seen before, ignore it, otherwise record it
-                        final MySQLLiteHelper db = new MySQLLiteHelper(context);
+                        final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
                         if (db.requestSeen(filename, srcDevice)) {
                             break;
                         } else {
@@ -538,19 +537,19 @@ public class RequestFileActivity extends AppCompatActivity {
                         ioex.printStackTrace();
                     }
                 }
+                disconnect();
 
             }
-
-            disconnect();
 
             return null;
         }
 
         void broadcastRequest() {
-            progress = "to broadcast packet";
-            final MySQLLiteHelper db = new MySQLLiteHelper(context);
+            Context context = getApplicationContext();
+            final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
             List<String> peers = db.getTrustedPeers();
             RequestFileActivity.this.toConnectDevice = "Pia";
+            System.out.println("BROADCAST: changed peer to connect to to be Pia");
             System.out.println("BROADCAST: changed peer to connect to to be Pia");
             lookForPeers();
             // TODO broadcast to friends (not sender)
@@ -563,12 +562,10 @@ public class RequestFileActivity extends AppCompatActivity {
          * @param src device REQ came from, and ACK should go to
          */
         void sendAck(String src) {
-            disconnect();
             RequestFileActivity.this.toConnectDevice = src;
             System.out.println("ACK: sending ack from " + RequestFileActivity.this.mDeviceName +
                     " to: " + src);
             lookForPeers();
-
             String file = "ackSent";
 
             final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
@@ -719,8 +716,6 @@ public class RequestFileActivity extends AppCompatActivity {
                 if (out != null) {
                     out.close();
                 }
-                /* end connection with device */
-                disconnect();
                 /* Stop Peer discovery if it is still going */
                 mManager.stopPeerDiscovery(mChannel, new WifiP2pManager.ActionListener() {
                     @Override
@@ -753,7 +748,7 @@ public class RequestFileActivity extends AppCompatActivity {
          */
         private boolean returnFile(String filename) {
             Context context = getApplicationContext();
-            final MySQLLiteHelper db = new MySQLLiteHelper(context);
+            final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
             List<MantaFile> files = db.getFilesWithName(filename);
             MantaFile toSend = null;
             if (files.isEmpty()) {

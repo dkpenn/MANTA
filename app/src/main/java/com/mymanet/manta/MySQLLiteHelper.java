@@ -42,8 +42,8 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
     private static final String TABLE_RESPONSE = "response";
     private static final String COLUMN_SRC = "src";
     private static final String RESPONSE_CREATE = "create table " + TABLE_RESPONSE + " (" +
-            COLUMN_FILENAME + " text, " + COLUMN_SRC + " text, " +
-            COLUMN_STATUS + " integer, primary key( " + COLUMN_FILENAME+ ", "+ COLUMN_SRC+ "));";
+            COLUMN_FILENAME + " text, " + COLUMN_SRC + " text, " + COLUMN_STATUS +
+            " integer, primary key (" + COLUMN_FILENAME + ", " + COLUMN_SRC + "));";
 
     // stores device names trusted by this device
     private static final String TABLE_TRUSTED = "trusted";
@@ -54,22 +54,34 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
     // used by transit nodes to keep track of requests that have been seen
     private static final String TABLE_FILTER = "filter";
     private static final String FILTER_CREATE = "create table " + TABLE_FILTER + " (" +
-            COLUMN_FILENAME + " text, " + COLUMN_SRC + " text, PRIMARY KEY(" + COLUMN_FILENAME + ", " + COLUMN_SRC + "));";
+            COLUMN_FILENAME + " text, " + COLUMN_SRC + " text, primary key (" + COLUMN_FILENAME +
+            ", " + COLUMN_SRC + "));";
 
     // keeps track of packets and which recipients they need to be sent to
     private static final String TABLE_SEND = "send";
     private static final String COLUMN_PACKET = "packet";
     private static final String COLUMN_TARGET = "target";
     private static final String SEND_CREATE = "create table " + TABLE_SEND + " (" +
-            COLUMN_PACKET + " text, " + COLUMN_TARGET + " text, primary key( " + COLUMN_PACKET + ", " + COLUMN_TARGET + "));";
+            COLUMN_PACKET + " text, " + COLUMN_TARGET + " text, primary key (" + COLUMN_PACKET +
+            ", " + COLUMN_TARGET + "));";
 
     //Database creation sql statement
     private static final String DATABASE_CREATE =
             FILES_CREATE + REQUEST_CREATE + RESPONSE_CREATE + TRUSTED_CREATE + FILTER_CREATE +
             SEND_CREATE;
 
+    private static MySQLLiteHelper instance;
+
     MySQLLiteHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+    }
+
+    public static synchronized MySQLLiteHelper getHelper(Context context) {
+        if (instance == null) {
+            instance = new MySQLLiteHelper(context);
+        }
+
+        return instance;
     }
 
     @Override
