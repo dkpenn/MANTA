@@ -461,29 +461,29 @@ public class RequestFileActivity extends AppCompatActivity {
                         progress = "received packet";
                         // if request has been seen before, ignore it, otherwise record it
                         final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
-                        if (db.requestSeen(filename, srcDevice)) {
-                            break;
-                        } else {
-                            db.addFilterRequest(filename, srcDevice);
-                        }
+//                        if (db.requestSeen(filename, srcDevice)) {
+//                            break;
+//                        } else {
+//                            db.addFilterRequest(filename, srcDevice);
+//                        }
                         RequestFileActivity.this.packet = pkt;
                         RequestFileActivity.this.packet.addToPath(RequestFileActivity.this.mDeviceName);
 
-                        if (containsFile(filename)) {
-                            System.out.println("to connect device: " +
-                                    RequestFileActivity.this.toConnectDevice + "\nthis device: " +
-                                    RequestFileActivity.this.mDeviceName + "\nsrc: " + srcDevice);
-                            System.out.println("found file: " +
-                                    filename);
-                            RequestFileActivity.this.packet.changePacketType(PacketType.ACK);
-                            sendAck(srcDevice);
-                            db.addResponse(filename, srcDevice);
+//                        if (containsFile(filename)) {
+//                            System.out.println("to connect device: " +
+//                                    RequestFileActivity.this.toConnectDevice + "\nthis device: " +
+//                                    RequestFileActivity.this.mDeviceName + "\nsrc: " + srcDevice);
+//                            System.out.println("found file: " +
+//                                    filename);
+//                            RequestFileActivity.this.packet.changePacketType(PacketType.ACK);
+//                            sendAck(srcDevice);
+//                            db.addResponse(filename, srcDevice);
 
-                        } else {
+//                        } else {
                             // TODO uncomment
                             progress = "to broadcast packet";
-                            broadcastRequest();
-                        }
+//                            broadcastRequest();
+//                        }
 
                         final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
                                 "hey.txt");
@@ -537,7 +537,7 @@ public class RequestFileActivity extends AppCompatActivity {
                         ioex.printStackTrace();
                     }
                 }
-                disconnect();
+//                disconnect();
 
             }
 
@@ -548,7 +548,7 @@ public class RequestFileActivity extends AppCompatActivity {
             Context context = getApplicationContext();
             final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
             List<String> peers = db.getTrustedPeers();
-            RequestFileActivity.this.toConnectDevice = "Pia";
+            RequestFileActivity.this.toConnectDevice = "Lord of Darkness";
             System.out.println("BROADCAST: changed peer to connect to to be Pia");
             System.out.println("BROADCAST: changed peer to connect to to be Pia");
             lookForPeers();
@@ -587,6 +587,7 @@ public class RequestFileActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String results) {
+            disconnect();
             if(RequestFileActivity.this.packet != null) {
               switch (RequestFileActivity.this.packet.getPacketType()) {
                   case REQUEST:
@@ -626,8 +627,7 @@ public class RequestFileActivity extends AppCompatActivity {
 
             System.out.println("server started");
 
-            if (Debug.isDebuggerConnected())
-                Debug.waitForDebugger();
+
 
             /** Create a server socket and wait for client connections. This
              * call blocks until a connection is accepted from a client
@@ -643,6 +643,10 @@ public class RequestFileActivity extends AppCompatActivity {
                 serverSocket = new ServerSocket(8888);
 
                 client = serverSocket.accept();
+
+                if (Debug.isDebuggerConnected())
+                    Debug.waitForDebugger();
+
                 inputStream = client.getInputStream();
                 out = new PrintWriter(client.getOutputStream(), true);
 
