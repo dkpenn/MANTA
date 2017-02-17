@@ -42,8 +42,8 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
     private static final String TABLE_RESPONSE = "response";
     private static final String COLUMN_SRC = "src";
     private static final String RESPONSE_CREATE = "create table " + TABLE_RESPONSE + " (" +
-            COLUMN_FILENAME + " text primary key, " + COLUMN_SRC + " text primary key, " +
-            COLUMN_STATUS + " integer);";
+            COLUMN_FILENAME + " text, " + COLUMN_SRC + " text, " +
+            COLUMN_STATUS + " integer, primary key( " + COLUMN_FILENAME+ ", "+ COLUMN_SRC+ "));";
 
     // stores device names trusted by this device
     private static final String TABLE_TRUSTED = "trusted";
@@ -54,14 +54,14 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
     // used by transit nodes to keep track of requests that have been seen
     private static final String TABLE_FILTER = "filter";
     private static final String FILTER_CREATE = "create table " + TABLE_FILTER + " (" +
-            COLUMN_FILENAME + " text primary key, " + COLUMN_SRC + " text primary key);";
+            COLUMN_FILENAME + " text, " + COLUMN_SRC + " text, PRIMARY KEY(" + COLUMN_FILENAME + ", " + COLUMN_SRC + "));";
 
     // keeps track of packets and which recipients they need to be sent to
     private static final String TABLE_SEND = "send";
     private static final String COLUMN_PACKET = "packet";
     private static final String COLUMN_TARGET = "target";
     private static final String SEND_CREATE = "create table " + TABLE_SEND + " (" +
-            COLUMN_PACKET + " text primary key, " + COLUMN_TARGET + " text primary key);";
+            COLUMN_PACKET + " text, " + COLUMN_TARGET + " text, primary key( " + COLUMN_PACKET + ", " + COLUMN_TARGET + "));";
 
     //Database creation sql statement
     private static final String DATABASE_CREATE =

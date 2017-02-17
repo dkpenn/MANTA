@@ -15,6 +15,7 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Debug;
 import android.os.Environment;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
@@ -27,6 +28,11 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.appindexing.Thing;
+import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -62,6 +68,11 @@ public class RequestFileActivity extends AppCompatActivity {
 //    List<Packet> packets; // packets that need to be processed
 
     Handler mBroadcastHandler;
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,7 +99,7 @@ public class RequestFileActivity extends AppCompatActivity {
         // TODO don't hard code toConnectDevice value
         toConnectDevice = "SIRIUS";
 
-        mEdit = (EditText)findViewById(R.id.requested_file);
+        mEdit = (EditText) findViewById(R.id.requested_file);
 
         mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
         mChannel = mManager.initialize(this, getMainLooper(), null);
@@ -104,12 +115,12 @@ public class RequestFileActivity extends AppCompatActivity {
             public void onConnectionInfoAvailable(WifiP2pInfo wifiP2pInfo) {
 
                 Context context = getApplicationContext();
-                CharSequence text = "Connection Successful:" + wifiP2pInfo.groupOwnerAddress +"\n";
+                CharSequence text = "Connection Successful:" + wifiP2pInfo.groupOwnerAddress + "\n";
                 int duration = Toast.LENGTH_SHORT;
                 Toast.makeText(context, text, duration).show();
 
                 //if not group owner, then send file as client
-                if(!wifiP2pInfo.isGroupOwner) {
+                if (!wifiP2pInfo.isGroupOwner) {
                     CharSequence text2 = "not group owner\n";
                     Toast.makeText(context, text2, duration).show();
                     sendFile(wifiP2pInfo);
@@ -127,7 +138,7 @@ public class RequestFileActivity extends AppCompatActivity {
         //mBroadcastHandler = new Handler();
         //mBroadcastHandler.postDelayed(mServiceBroadcastingRunnable, 1000);
 
-        mReceiver = new WifiDirectBroadcastReceiver(mManager, mChannel,this, mPeerListListener,
+        mReceiver = new WifiDirectBroadcastReceiver(mManager, mChannel, this, mPeerListListener,
                 mConnectionInfoListener);
 
         mIntentFilter = new IntentFilter();
@@ -135,6 +146,9 @@ public class RequestFileActivity extends AppCompatActivity {
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
     /* from stack overflow
@@ -171,13 +185,13 @@ public class RequestFileActivity extends AppCompatActivity {
     }
 
     private void startServer(WifiP2pInfo wifiP2pInfo) {
-        new RequestFileActivity.OFileServerAsyncTask().execute();
+        new OFileServerAsyncTask().execute();
     }
 
     private void sendFile(WifiP2pInfo wifiP2pInfo) {
         InetAddress[] addresses = new InetAddress[1];
         addresses[0] = wifiP2pInfo.groupOwnerAddress;
-        new RequestFileActivity.OFileClientAsyncTask().execute(addresses);
+        new OFileClientAsyncTask().execute(addresses);
     }
 
     /* register the broadcast receiver with the intent values to be matched */
@@ -196,6 +210,7 @@ public class RequestFileActivity extends AppCompatActivity {
 
     /**
      * When user clicks to request a file, tries to make connections with neighbors
+     *
      * @param view
      */
     public void requestByFilename(View view) {
@@ -210,8 +225,8 @@ public class RequestFileActivity extends AppCompatActivity {
             // TODO move to next request
             return;
         }
-
-        packet = new Packet(filename, TIME_TO_LIVE, mDeviceName, PacketType.REQUEST);
+        String deviceName = WifiDirectBroadcastReceiver.mDevice.deviceName;
+        packet = new Packet(filename, TIME_TO_LIVE, deviceName, PacketType.REQUEST);
 //        packet.addToPath(mDeviceName);
 
         setContentView(R.layout.activity_propagate_request);
@@ -226,7 +241,7 @@ public class RequestFileActivity extends AppCompatActivity {
     }
 
     public void lookForPeers() {
-        mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener(){
+        mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
 
             @Override
             public void onSuccess() {
@@ -253,6 +268,7 @@ public class RequestFileActivity extends AppCompatActivity {
      * Initial callback method for peer list listener.
      * Once the state of the peer list listener changes,
      * this method is called
+     *
      * @param deviceList
      */
     public void connectToFirstDevice(WifiP2pDeviceList deviceList) {
@@ -260,19 +276,20 @@ public class RequestFileActivity extends AppCompatActivity {
         // get first device
         WifiP2pDevice firstDevice = null;
 
-        for(WifiP2pDevice device : deviceList.getDeviceList())
-        {
+        for (WifiP2pDevice device : deviceList.getDeviceList()) {
             System.out.println("to connect device: " + this.toConnectDevice);
-            if(device.deviceName.equals(this.toConnectDevice)) {
+            if (device.deviceName.equals(this.toConnectDevice)) {
                 firstDevice = device;
                 break;
             }
         }
 
-        if (firstDevice == null) { return; }
+        if (firstDevice == null) {
+            return;
+        }
 
         // connect to device
-        if(firstDevice != null) {
+        if (firstDevice != null) {
 
             WifiP2pConfig config = new WifiP2pConfig();
             config.deviceAddress = firstDevice.deviceAddress;
@@ -301,7 +318,7 @@ public class RequestFileActivity extends AppCompatActivity {
     /**
      * disconnect from stack overflow
      * http://stackoverflow.com/questions/18679481/wifi-direct-end-connection-to-peer-on-android
-     * */
+     */
     protected void disconnect() {
         if (mManager != null && mChannel != null) {
             mManager.requestGroupInfo(mChannel, new WifiP2pManager.GroupInfoListener() {
@@ -334,6 +351,42 @@ public class RequestFileActivity extends AppCompatActivity {
     }
 
     /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    public Action getIndexApiAction() {
+        Thing object = new Thing.Builder()
+                .setName("RequestFile Page") // TODO: Define a title for the content shown.
+                // TODO: Make sure this auto-generated URL is correct.
+                .setUrl(Uri.parse("http://[ENTER-YOUR-URL-HERE]"))
+                .build();
+        return new Action.Builder(Action.TYPE_VIEW)
+                .setObject(object)
+                .setActionStatus(Action.STATUS_TYPE_COMPLETED)
+                .build();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.connect();
+        AppIndex.AppIndexApi.start(client, getIndexApiAction());
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        AppIndex.AppIndexApi.end(client, getIndexApiAction());
+        client.disconnect();
+    }
+
+    /**
      * client side of connection
      */
     // receive request packet and parse it
@@ -347,17 +400,13 @@ public class RequestFileActivity extends AppCompatActivity {
 
         private Context context;
         private TextView statusText;
-
+        private CharSequence progress = "not connected";
 
         @Override
         protected String doInBackground(InetAddress[] params) {
 
-            if(android.os.Debug.isDebuggerConnected())
-                android.os.Debug.waitForDebugger();
-
             /* busy wait to get server hopefully running */
-            for(int i = 0; i < 1000; i++)
-            {
+            for (int i = 0; i < 1000; i++) {
 
             }
 
@@ -383,21 +432,25 @@ public class RequestFileActivity extends AppCompatActivity {
                 /*changed timeout to 1000ms so connection has time to happen */
                 socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 5500);
 
+                if (Debug.isDebuggerConnected())
+                    Debug.waitForDebugger();
+
+                progress = "connected";
                 /* get read and write ends of stream socket */
                 outputStream = socket.getOutputStream();
                 inputStream = socket.getInputStream();
 
-                BufferedReader in  = new BufferedReader(
+                BufferedReader in = new BufferedReader(
                         new InputStreamReader(inputStream)
                 );
 
                 String packetTypeString = in.readLine();
-                Log.e("client", packetTypeString);
+                Log.v("client", packetTypeString);
                 PacketType packetType = PacketType.fromInt(Integer.parseInt(packetTypeString));
 
                 Packet pkt = null;
                 System.out.println("got packet");
-                switch(packetType) {
+                switch (packetType) {
                     case REQUEST:
                         String srcDevice = in.readLine();
                         String filename = in.readLine();
@@ -406,6 +459,7 @@ public class RequestFileActivity extends AppCompatActivity {
                         pkt = new Packet(filename, ttl, srcDevice, packetType, path);
 
                         System.out.println("request packet for: " + filename + " from: " + srcDevice);
+                        progress = "received packet";
                         // if request has been seen before, ignore it, otherwise record it
                         final MySQLLiteHelper db = new MySQLLiteHelper(context);
                         if (db.requestSeen(filename, srcDevice)) {
@@ -413,7 +467,7 @@ public class RequestFileActivity extends AppCompatActivity {
                         } else {
                             db.addFilterRequest(filename, srcDevice);
                         }
-
+                        RequestFileActivity.this.packet = pkt;
                         RequestFileActivity.this.packet.addToPath(RequestFileActivity.this.mDeviceName);
 
                         if (containsFile(filename)) {
@@ -428,7 +482,8 @@ public class RequestFileActivity extends AppCompatActivity {
 
                         } else {
                             // TODO uncomment
-                            broadcastRequest(srcDevice);
+                            progress = "to broadcast packet";
+                            broadcastRequest();
                         }
 
                         final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
@@ -444,10 +499,9 @@ public class RequestFileActivity extends AppCompatActivity {
                 }
 
                 String file;
-                if(pkt != null) {
+                if (pkt != null) {
                     file = pkt.getFilename();
-                }
-                else {
+                } else {
                     file = "whatup.txt";
                 }
                 final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
@@ -455,26 +509,21 @@ public class RequestFileActivity extends AppCompatActivity {
 
                 f.createNewFile();
 
-            }
-            catch (FileNotFoundException e) {
+            } catch (FileNotFoundException e) {
                 Log.e("request file", e.getMessage());
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 Log.e("request file", e.getMessage());
-            }
-            catch(NumberFormatException e) {
+            } catch (NumberFormatException e) {
                 Log.e("request file ", e.getMessage());
-            }
-            finally
-            {
-                if(outputStream != null) {
+            } finally {
+                if (outputStream != null) {
                     try {
                         outputStream.close();
                     } catch (IOException ioex) {
                         ioex.printStackTrace();
                     }
                 }
-                if(fileInputStream != null) {
+                if (fileInputStream != null) {
                     try {
                         fileInputStream.close();
                     } catch (IOException ioex) {
@@ -482,7 +531,7 @@ public class RequestFileActivity extends AppCompatActivity {
                     }
                 }
 
-                if(inputStream != null) {
+                if (inputStream != null) {
                     try {
                         inputStream.close();
                     } catch (IOException ioex) {
@@ -497,10 +546,10 @@ public class RequestFileActivity extends AppCompatActivity {
             return null;
         }
 
-        void broadcastRequest(String src) {
+        void broadcastRequest() {
+            progress = "to broadcast packet";
             final MySQLLiteHelper db = new MySQLLiteHelper(context);
             List<String> peers = db.getTrustedPeers();
-            disconnect();
             RequestFileActivity.this.toConnectDevice = "Pia";
             System.out.println("BROADCAST: changed peer to connect to to be Pia");
             lookForPeers();
@@ -510,13 +559,14 @@ public class RequestFileActivity extends AppCompatActivity {
 
         /**
          * send ACK backwards through network
+         *
          * @param src device REQ came from, and ACK should go to
          */
         void sendAck(String src) {
             disconnect();
             RequestFileActivity.this.toConnectDevice = src;
             System.out.println("ACK: sending ack from " + RequestFileActivity.this.mDeviceName +
-                " to: " + src);
+                    " to: " + src);
             lookForPeers();
 
             String file = "ackSent";
@@ -540,13 +590,25 @@ public class RequestFileActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String results) {
-            Context context = getApplicationContext();
-            CharSequence text = "Sent";
-            int duration = Toast.LENGTH_SHORT;
-            Toast.makeText(context, text, duration).show();
-            Intent intent = new Intent(context, MainActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(intent);
+            if(RequestFileActivity.this.packet != null) {
+              switch (RequestFileActivity.this.packet.getPacketType()) {
+                  case REQUEST:
+                      broadcastRequest();
+                      break;
+                  default:
+                      break;
+              }
+            }
+            else {
+
+
+                Context context = getApplicationContext();
+                int duration = Toast.LENGTH_SHORT;
+                Toast.makeText(context, progress, duration).show();
+                Intent intent = new Intent(context, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
+            }
         }
 
     }
@@ -563,12 +625,12 @@ public class RequestFileActivity extends AppCompatActivity {
 
 
         @Override
-        protected String doInBackground(Void ... params) {
+        protected String doInBackground(Void... params) {
 
             System.out.println("server started");
 
-            if(android.os.Debug.isDebuggerConnected())
-                android.os.Debug.waitForDebugger();
+            if (Debug.isDebuggerConnected())
+                Debug.waitForDebugger();
 
             /** Create a server socket and wait for client connections. This
              * call blocks until a connection is accepted from a client
@@ -595,7 +657,7 @@ public class RequestFileActivity extends AppCompatActivity {
                 }
 
 
-                switch(packet.getPacketType()) {
+                switch (packet.getPacketType()) {
                     case REQUEST:
                         /**
                          * Write request packet data
@@ -605,7 +667,7 @@ public class RequestFileActivity extends AppCompatActivity {
                         out.println("1");
                         out.println(packet.getSrc());
                         out.println(packet.getFilename());
-                        out.println(packet.getTimeToLive()+ "");
+                        out.println(packet.getTimeToLive() + "");
                         out.println(packet.pathToString());
                         break;
                     default:
@@ -637,10 +699,8 @@ public class RequestFileActivity extends AppCompatActivity {
                 Log.e("Request File", e.getMessage());
             } catch (IOException e) {
                 Log.e("Request File", e.getMessage());
-            }
-            finally
-            {
-                if(client != null) {
+            } finally {
+                if (client != null) {
                     try {
                         client.close();
                     } catch (IOException e) {
@@ -648,7 +708,7 @@ public class RequestFileActivity extends AppCompatActivity {
                     }
                 }
 
-                if(serverSocket != null) {
+                if (serverSocket != null) {
                     try {
                         serverSocket.close();
                     } catch (IOException e) {
@@ -656,7 +716,7 @@ public class RequestFileActivity extends AppCompatActivity {
                     }
                 }
 
-                if(out != null) {
+                if (out != null) {
                     out.close();
                 }
                 /* end connection with device */
@@ -680,14 +740,14 @@ public class RequestFileActivity extends AppCompatActivity {
         private void copyFile(InputStream inputStream, FileOutputStream fileOutputStream) throws IOException {
             byte[] buffer = new byte[1024];
             int read;
-            while ((read = inputStream.read(buffer)) != -1)
-            {
+            while ((read = inputStream.read(buffer)) != -1) {
                 fileOutputStream.write(buffer, 0, read);
             }
         }
 
         /**
          * If this phone has the requested file, send it back
+         *
          * @param filename requested file
          * @return true if had file and sent it back, false otherwise
          */

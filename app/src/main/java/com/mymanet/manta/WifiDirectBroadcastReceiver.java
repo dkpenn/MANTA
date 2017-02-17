@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.NetworkInfo;
+import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.WifiP2pManager.*;
@@ -25,9 +26,11 @@ public class WifiDirectBroadcastReceiver extends BroadcastReceiver {
     private Activity mActivity;
     protected PeerListListener myPeerListListener;
     protected ConnectionInfoListener mConnectionInfoListener;
+    static WifiP2pDevice mDevice = null;
 
     public WifiDirectBroadcastReceiver(WifiP2pManager manager, Channel channel, Activity activity,
                                        PeerListListener peerListListener, ConnectionInfoListener connectionInfoListener)
+
     {
         super();
         mManager = manager;
@@ -50,7 +53,14 @@ public class WifiDirectBroadcastReceiver extends BroadcastReceiver {
             } else {
                 // Wi-Fi P2P is not enabled
             }
-        } else if (WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)) {
+        }
+        //http://stackoverflow.com/questions/30256505/how-to-get-wifi-direct-devices-name-from-wifip2pdevicelist
+        if (action.equals(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION))
+        {
+              mDevice = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_DEVICE);
+            // device.deviceName
+        }
+        else if (WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)) {
             // Call WifiP2pManager.requestPeers() to get a list of current peers
             // request available peers from the wifi p2p manager. This is an
             // asynchronous call and the calling activity is notified with a
