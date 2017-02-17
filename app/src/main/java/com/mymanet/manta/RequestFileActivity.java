@@ -125,7 +125,7 @@ public class RequestFileActivity extends AppCompatActivity {
         };
 
 
-        //mBroadcastHandler = new Handler();
+        mBroadcastHandler = new Handler();
         //mBroadcastHandler.postDelayed(mServiceBroadcastingRunnable, 1000);
 
         mReceiver = new WifiDirectBroadcastReceiver(mManager, mChannel, this, mPeerListListener,
@@ -144,17 +144,16 @@ public class RequestFileActivity extends AppCompatActivity {
     private Runnable mServiceBroadcastingRunnable = new Runnable() {
         @Override
         public void run() {
-            mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
-                @Override
-                public void onSuccess() {
-                }
-
-                @Override
-                public void onFailure(int error) {
-                }
-            });
-            mBroadcastHandler
-                    .postDelayed(mServiceBroadcastingRunnable, 1000);
+//            mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
+//                @Override
+//                public void onSuccess() {
+//                }
+//
+//                @Override
+//                public void onFailure(int error) {
+//                }
+//            });
+            lookForPeers();
         }
     };
 
@@ -511,8 +510,9 @@ public class RequestFileActivity extends AppCompatActivity {
             List<String> peers = db.getTrustedPeers();
             RequestFileActivity.this.toConnectDevice = "Lord of Darkness";
             System.out.println("BROADCAST: changed peer to connect to to be Pia");
-            System.out.println("BROADCAST: changed peer to connect to to be Pia");
-            lookForPeers();
+            mBroadcastHandler
+                    .postDelayed(mServiceBroadcastingRunnable, 1000);
+            //lookForPeers();
             // TODO broadcast to friends (not sender)
             // here just broadcasting to one friend
         }
@@ -693,6 +693,7 @@ public class RequestFileActivity extends AppCompatActivity {
                         Log.d("wifi p2p", "not stop peer discovery");
                     }
                 });
+                disconnect();
             }
             return null;
         }
@@ -736,6 +737,7 @@ public class RequestFileActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String results) {
+            disconnect();
             Context context = getApplicationContext();
             CharSequence text = "Sent";
             int duration = Toast.LENGTH_SHORT;
