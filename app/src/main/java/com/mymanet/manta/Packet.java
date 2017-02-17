@@ -66,6 +66,7 @@ class Packet {
     void changePacketType(PacketType type) { this.type = type; }
 
     private List<String> toListOfNodes(String path) {
+        path = path.replace("\n","");
         return new ArrayList<String>(Arrays.asList(path.split("\t")));
     }
 
@@ -75,6 +76,7 @@ class Packet {
             sb.append(node.toCharArray());
             sb.append('\t');
         }
+        sb.deleteCharAt(sb.length()-1);
         sb.append('\n');
         return sb.toString();
     }
