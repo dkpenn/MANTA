@@ -84,7 +84,7 @@ public class RequestFileActivity extends AppCompatActivity {
 //        });
 
         packet = null;
-        mDeviceName = getHostName("");
+        //mDeviceName = getHostName("");
 
         // TODO don't hard code toConnectDevice value
         toConnectDevice = "SIRIUS";
@@ -136,6 +136,9 @@ public class RequestFileActivity extends AppCompatActivity {
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
+
+        mDeviceName = WifiDirectBroadcastReceiver.mDevice.deviceName;
+
     }
 
     /* from stack overflow
@@ -160,15 +163,15 @@ public class RequestFileActivity extends AppCompatActivity {
     /*http://stackoverflow.com/questions/26643989/android-how-to-get-current-device-wifi-direct-name
     * get device name of this device*/
 
-    public static String getHostName(String defValue) {
-        try {
-            Method getString = Build.class.getDeclaredMethod("getString", String.class);
-            getString.setAccessible(true);
-            return getString.invoke(null, "net.hostname").toString();
-        } catch (Exception ex) {
-            return defValue;
-        }
-    }
+//    public static String getHostName(String defValue) {
+//        try {
+//            Method getString = Build.class.getDeclaredMethod("getString", String.class);
+//            getString.setAccessible(true);
+//            return getString.invoke(null, "net.hostname").toString();
+//        } catch (Exception ex) {
+//            return defValue;
+//        }
+//    }
 
     private void startServer(WifiP2pInfo wifiP2pInfo) {
         new OFileServerAsyncTask().execute();
@@ -213,13 +216,18 @@ public class RequestFileActivity extends AppCompatActivity {
         }
         String deviceName = WifiDirectBroadcastReceiver.mDevice.deviceName;
         packet = new Packet(filename, TIME_TO_LIVE, deviceName, PacketType.REQUEST);
-//        packet.addToPath(mDeviceName);
+        packet.addToPath(deviceName);
 
         setContentView(R.layout.activity_propagate_request);
 
         lookForPeers();
     }
 
+    /***
+     * containsFile - check whether file is locally stored
+     * @param filename
+     * @return
+     */
     public boolean containsFile(String filename) {
         MySQLLiteHelper db = MySQLLiteHelper.getHelper(this);
         return db.containsFile(filename);
@@ -270,6 +278,7 @@ public class RequestFileActivity extends AppCompatActivity {
         }
 
         if (firstDevice == null) {
+            Log.d("connectToFirstDevice", "device is not found");
             return;
         }
 
@@ -585,7 +594,9 @@ public class RequestFileActivity extends AppCompatActivity {
 
         @Override
         protected String doInBackground(Void... params) {
-
+            if(RequestFileActivity.this.packet == null) {
+                Log.d("ServerAsyncTask", "no packet is supplied");
+            }
             System.out.println("server started");
 
 
@@ -655,7 +666,9 @@ public class RequestFileActivity extends AppCompatActivity {
                         "done.txt");
 
                 f.createNewFile();
-                return null;
+
+                /*ONLY FOR DEMO PURPOSES (ALSO ASSUMING ONLY SEND TO ONE PEER) */
+                RequestFileActivity.this.packet = null;
 
             } catch (NoPacketException e) {
                 Log.e("Request File", e.getMessage());
