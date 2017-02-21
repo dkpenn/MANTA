@@ -137,7 +137,7 @@ public class RequestFileActivity extends AppCompatActivity {
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
 
-        mDeviceName = WifiDirectBroadcastReceiver.mDevice.deviceName;
+        //mDeviceName = WifiDirectBroadcastReceiver.mDevice.deviceName;
 
     }
 
@@ -517,7 +517,7 @@ public class RequestFileActivity extends AppCompatActivity {
             Context context = getApplicationContext();
             final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
             List<String> peers = db.getTrustedPeers();
-            RequestFileActivity.this.toConnectDevice = "Lord of Darkness";
+            RequestFileActivity.this.toConnectDevice = "Pia";
             System.out.println("BROADCAST: changed peer to connect to to be Pia");
             mBroadcastHandler
                     .postDelayed(mServiceBroadcastingRunnable, 1000);
