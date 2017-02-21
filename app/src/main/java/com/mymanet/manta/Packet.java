@@ -28,10 +28,10 @@ class Packet {
         this.path = new ArrayList<>();
     }
 
-    Packet(String filename, int timeToLive, String src, PacketType type, String path) {
+    Packet(String filename, int timeToLive, String src, PacketType type, String path, int pathPosition) {
         this.filename = filename;
         this.timeToLive = timeToLive;
-        this.pathPosition = 0;
+        this.pathPosition = pathPosition;
         this.src = src;
         this.type = type;
         this.path = toListOfNodes(path);
