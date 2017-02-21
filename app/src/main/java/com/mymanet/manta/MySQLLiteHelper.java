@@ -110,9 +110,11 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
 
     // **** FILES TABLE FUNCTIONS ****
 
-    //CRUD for File names
+    /**
+     * Add a file to the database
+     * @param file
+     */
     public void addFile(MantaFile file) {
-        //for logging
 
         Log.d("addFile", file.toString());
 
@@ -134,7 +136,10 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
         db.close();
     }
 
-    // Deleting single book
+    /**
+     * Delete a single file from the db
+     * @param file
+     */
     public void deleteFile(MantaFile file) {
 
         // 1. get reference to writable DB
@@ -152,7 +157,9 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
 
     }
 
-    // Deleting single book
+    /**
+     * Delete all files in the database
+     */
     public void deleteAllFiles() {
 
         // 1. get reference to writable DB
@@ -170,16 +177,24 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
 
     }
 
+    /**
+     * Get all files currently stored in database
+     * @return a list of mantaFiles
+     */
     public List<MantaFile> getAllFiles() {
         List<MantaFile> files = new LinkedList<MantaFile>();
 
         // 1. build the query
         String query = "SELECT  * FROM " + TABLE_FILES;
+
         // 2. get reference to writable DB
         SQLiteDatabase db = this.getWritableDatabase();
+
         Cursor cursor = db.rawQuery(query, null);
-        // 3. go over each row, build book and add it to list
+
+        // 3. go over each row, build file and add it to list
         MantaFile file = null;
+
         if (cursor.moveToFirst()) {
             do {
                 file = new MantaFile();
@@ -188,10 +203,16 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
                 files.add(file);
             } while (cursor.moveToNext());
         }
+
         Log.d("getAllBooks()", files.toString());
+
         return files;
     }
 
+    /**
+     * Get all file names stored in database
+     * @return
+     */
     public List<String> getAllFileNames() {
         List<String> files = new LinkedList<String>();
 
@@ -210,6 +231,11 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
         return files;
     }
 
+    /**
+     * Check if file with given filename exists in db
+     * @param filename
+     * @return
+     */
     boolean containsFile(String filename) {
         List<String> files = getAllFileNames();
         for (String file : files) {
@@ -220,6 +246,11 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
         return false;
     }
 
+    /***
+     * Get all files with this name
+     * @param name
+     * @return
+     */
     public List<MantaFile> getFilesWithName(String name) {
         List<MantaFile> files = new LinkedList<MantaFile>();
 
@@ -285,6 +316,26 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         db.execSQL(query);
     }
+
+    /**
+     * Delete all requests currently stored
+     */
+    public void deleteAllRequests() {
+
+        // 1. get reference to writable DB
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        // 2. delete
+        db.delete(TABLE_REQUEST,
+                "1",
+                null);
+
+        // 3. close
+        db.close();
+
+        Log.d("deleteAllRequests", "deleted everything");
+
+    }
     // **** RESPONSE TABLE FUNCTIONS ****
 
     /**
@@ -312,6 +363,26 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
         db.execSQL(query);
     }
 
+    /**
+     * Delete all responses currently stored
+     */
+    public void deleteAllResponses() {
+
+        // 1. get reference to writable DB
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        // 2. delete
+        db.delete(TABLE_RESPONSE,
+                "1",
+                null);
+
+        // 3. close
+        db.close();
+
+        Log.d("deleteAllResponses", "deleted everything");
+
+    }
+
     // **** FILTER TABLE FUNCTIONS ****
 
     /**
@@ -333,6 +404,27 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
                 ") VALUES (\"" + filename + "\", \"" + src + "\");";
         SQLiteDatabase db = this.getWritableDatabase();
         db.execSQL(query);
+    }
+
+
+    /**
+     * Delete all filter requests currently stored
+     */
+    public void deleteAllFilterRequests() {
+
+        // 1. get reference to writable DB
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        // 2. delete
+        db.delete(TABLE_FILTER,
+                "1",
+                null);
+
+        // 3. close
+        db.close();
+
+        Log.d("deleteAllFilterRequests", "deleted everything");
+
     }
 
     // **** TRUSTED TABLE FUNCTIONS ****
@@ -363,6 +455,26 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
         }
         cursor.close();
         return devices;
+    }
+
+    /**
+     * Delete all trusted peers currently stored
+     */
+    public void deleteAllTrustedPeers() {
+
+        // 1. get reference to writable DB
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        // 2. delete
+        db.delete(TABLE_TRUSTED,
+                "1",
+                null);
+
+        // 3. close
+        db.close();
+
+        Log.d("deleteAllTrustedPeers", "deleted everything");
+
     }
 
     // **** SEND TABLE FUNCTIONS ****

@@ -68,6 +68,8 @@ public class RequestFileActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        //clear all tables
+
 //        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
 //        fab.setOnClickListener(new View.OnClickListener() {
 //            @Override
@@ -175,6 +177,13 @@ public class RequestFileActivity extends AppCompatActivity {
         InetAddress[] addresses = new InetAddress[1];
         addresses[0] = wifiP2pInfo.groupOwnerAddress;
         new OFileClientAsyncTask().execute(addresses);
+    }
+
+    public void deleteTempData() {
+        MySQLLiteHelper db = MySQLLiteHelper.getHelper(this);
+        db.deleteAllRequests();
+        db.deleteAllFilterRequests();
+        db.deleteAllResponses();
     }
 
     /* register the broadcast receiver with the intent values to be matched */
