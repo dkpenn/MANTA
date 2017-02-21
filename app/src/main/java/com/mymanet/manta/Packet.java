@@ -63,7 +63,14 @@ class Packet {
         this.path.add(node);
     }
 
+    String getNodeAtPathPosition() { return this.path.get(this.pathPosition); }
+
     void changePacketType(PacketType type) { this.type = type; }
+
+    void changeToACK() {
+        this.type = PacketType.ACK;
+        this.pathPosition = this.path.size() - 1;
+    }
 
     private List<String> toListOfNodes(String path) {
         path = path.replace("\n","");

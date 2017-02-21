@@ -1,11 +1,9 @@
 package com.mymanet.manta;
 
 import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.net.Uri;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
@@ -18,11 +16,8 @@ import android.os.Bundle;
 import android.os.Debug;
 import android.os.Environment;
 import android.os.Handler;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
@@ -43,7 +38,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.List;
 
 public class RequestFileActivity extends AppCompatActivity {
@@ -430,35 +424,50 @@ public class RequestFileActivity extends AppCompatActivity {
                         progress = "received packet";
                         // if request has been seen before, ignore it, otherwise record it
                         final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
-//                        if (db.requestSeen(filename, srcDevice)) {
-//                            break;
-//                        } else {
-//                            db.addFilterRequest(filename, srcDevice);
-//                        }
+                        if (db.requestSeen(filename, srcDevice)) {
+                            break;
+                        } else {
+                            db.addFilterRequest(filename, srcDevice);
+                        }
                         RequestFileActivity.this.packet = pkt;
                         RequestFileActivity.this.packet.addToPath(RequestFileActivity.this.mDeviceName);
 
-//                        if (containsFile(filename)) {
-//                            System.out.println("to connect device: " +
-//                                    RequestFileActivity.this.toConnectDevice + "\nthis device: " +
-//                                    RequestFileActivity.this.mDeviceName + "\nsrc: " + srcDevice);
-//                            System.out.println("found file: " +
-//                                    filename);
-//                            RequestFileActivity.this.packet.changePacketType(PacketType.ACK);
-//                            sendAck(srcDevice);
-//                            db.addResponse(filename, srcDevice);
+                        if (containsFile(filename)) {
+                            System.out.println("to connect device: " +
+                                    RequestFileActivity.this.toConnectDevice + "\nthis device: " +
+                                    RequestFileActivity.this.mDeviceName + "\nsrc: " + srcDevice);
+                            System.out.println("found file: " +
+                                    filename);
+                            sendAck(srcDevice);
+                            db.addResponse(filename, srcDevice);
 
-//                        } else {
+                        } else {
                             // TODO uncomment
                             progress = "to broadcast packet";
-//                            broadcastRequest();
-//                        }
+                            broadcastRequest();
+                        }
 
                         final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
                                 "hey.txt");
                         f.createNewFile();
                         break;
                     case ACK:
+                        srcDevice = in.readLine();
+                        filename = in.readLine();
+                        ttl = Integer.parseInt(in.readLine());
+                        path = in.readLine();
+                        pkt = new Packet(filename, ttl, srcDevice, packetType, path);
+
+                        System.out.println("ack packet for: " + filename + " from: " + srcDevice);
+                        progress = "received packet";
+
+                        // TODO do some db stuff
+
+                        pkt.decrPathPosition();
+                        RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
+                        System.out.println("ack sending to " + RequestFileActivity.this.toConnectDevice);
+                        RequestFileActivity.this.packet = pkt;
+
                         break;
                     case SEND:
                         break;
@@ -532,10 +541,10 @@ public class RequestFileActivity extends AppCompatActivity {
          * @param src device REQ came from, and ACK should go to
          */
         void sendAck(String src) {
+            RequestFileActivity.this.packet.changeToACK();
             RequestFileActivity.this.toConnectDevice = src;
             System.out.println("ACK: sending ack from " + RequestFileActivity.this.mDeviceName +
                     " to: " + src);
-            lookForPeers();
             String file = "ackSent";
 
             final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
@@ -558,26 +567,27 @@ public class RequestFileActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String results) {
             disconnect();
-            if(RequestFileActivity.this.packet != null) {
-              switch (RequestFileActivity.this.packet.getPacketType()) {
-                  case REQUEST:
-                      broadcastRequest();
-                      break;
-                  default:
-                      break;
-              }
-            }
-            else {
+            lookForPeers();
+//            if(RequestFileActivity.this.packet != null) {
+//              switch (RequestFileActivity.this.packet.getPacketType()) {
+//                  case REQUEST:
+//                      broadcastRequest();
+//                      break;
+//                  default:
+//                      break;
+//              }
+//            }
+//            else {
 
 
-                Context context = getApplicationContext();
-                int duration = Toast.LENGTH_SHORT;
-                Toast.makeText(context, progress, duration).show();
-                Intent intent = new Intent(context, MainActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                context.startActivity(intent);
+//                Context context = getApplicationContext();
+//                int duration = Toast.LENGTH_SHORT;
+//                Toast.makeText(context, progress, duration).show();
+//                Intent intent = new Intent(context, MainActivity.class);
+//                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//                context.startActivity(intent);
             }
-        }
+//        }
 
     }
 
