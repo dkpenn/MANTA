@@ -411,24 +411,31 @@ public class RequestFileActivity extends AppCompatActivity {
                 PacketType packetType = PacketType.fromInt(Integer.parseInt(packetTypeString));
 
                 Packet pkt = null;
+                String srcDevice;
+                String filename;
+                int ttl;
+                String path;
+                int pathPosition;
+
                 System.out.println("got packet");
                 switch (packetType) {
                     case REQUEST:
-                        String srcDevice = in.readLine();
-                        String filename = in.readLine();
-                        int ttl = Integer.parseInt(in.readLine());
-                        String path = in.readLine();
-                        pkt = new Packet(filename, ttl, srcDevice, packetType, path);
+                        srcDevice = in.readLine();
+                        filename = in.readLine();
+                        ttl = Integer.parseInt(in.readLine());
+                        path = in.readLine();
+                        pathPosition = Integer.parseInt(in.readLine());
+                        pkt = new Packet(filename, ttl, srcDevice, packetType, path, pathPosition);
 
                         System.out.println("request packet for: " + filename + " from: " + srcDevice);
                         progress = "received packet";
                         // if request has been seen before, ignore it, otherwise record it
                         final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
-                        if (db.requestSeen(filename, srcDevice)) {
-                            break;
-                        } else {
-                            db.addFilterRequest(filename, srcDevice);
-                        }
+//                        if (db.requestSeen(filename, srcDevice)) {
+//                            break;
+//                        } else {
+//                            db.addFilterRequest(filename, srcDevice);
+//                        }
                         RequestFileActivity.this.packet = pkt;
                         RequestFileActivity.this.packet.addToPath(RequestFileActivity.this.mDeviceName);
 
@@ -456,12 +463,11 @@ public class RequestFileActivity extends AppCompatActivity {
                         filename = in.readLine();
                         ttl = Integer.parseInt(in.readLine());
                         path = in.readLine();
-                        pkt = new Packet(filename, ttl, srcDevice, packetType, path);
+                        pathPosition = Integer.parseInt(in.readLine());
+                        pkt = new Packet(filename, ttl, srcDevice, packetType, path, pathPosition);
 
                         System.out.println("ack packet for: " + filename + " from: " + srcDevice);
                         progress = "received packet";
-
-                        // TODO do some db stuff
 
                         pkt.decrPathPosition();
                         RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
@@ -652,6 +658,7 @@ public class RequestFileActivity extends AppCompatActivity {
                         out.println(packet.getFilename());
                         out.println(packet.getTimeToLive() + "");
                         out.println(packet.pathToString());
+                        out.println(packet.pathPosition);
                         break;
                     default:
                         break;
