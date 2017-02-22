@@ -51,7 +51,6 @@ public class RequestFileActivity extends AppCompatActivity {
     WifiP2pManager.PeerListListener mPeerListListener;
     WifiP2pManager.ConnectionInfoListener mConnectionInfoListener;
     IntentFilter mIntentFilter;
-    String mDeviceName;
     String toConnectDevice;
     Packet packet;
 //    List<Packet> packets; // packets that need to be processed
@@ -62,25 +61,11 @@ public class RequestFileActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-//        packets = new ArrayList<>();
-        System.out.println("onCreate entered");
         setContentView(R.layout.activity_request_file);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        //clear all tables
-
-//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-//        fab.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                        .setAction("Action", null).show();
-//            }
-//        });
-
         packet = null;
-        //mDeviceName = getHostName("");
 
         // TODO don't hard code toConnectDevice value
         toConnectDevice = "SIRIUS";
@@ -132,8 +117,6 @@ public class RequestFileActivity extends AppCompatActivity {
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
-
-        //mDeviceName = WifiDirectBroadcastReceiver.mDevice.deviceName;
 
     }
 
@@ -450,12 +433,13 @@ public class RequestFileActivity extends AppCompatActivity {
 //                            db.addFilterRequest(filename, srcDevice);
 //                        }
                         RequestFileActivity.this.packet = pkt;
-                        RequestFileActivity.this.packet.addToPath(RequestFileActivity.this.mDeviceName);
+                        String deviceName = WifiDirectBroadcastReceiver.mDevice.deviceName;
+
+                        RequestFileActivity.this.packet.addToPath(deviceName);
 
                         if (containsFile(filename)) {
                             System.out.println("to connect device: " +
-                                    RequestFileActivity.this.toConnectDevice + "\nthis device: " +
-                                    RequestFileActivity.this.mDeviceName + "\nsrc: " + srcDevice);
+                                    RequestFileActivity.this.toConnectDevice + "\nsrc: " + srcDevice);
                             System.out.println("found file: " +
                                     filename);
                             sendAck(srcDevice);
@@ -564,8 +548,7 @@ public class RequestFileActivity extends AppCompatActivity {
         void sendAck(String src) {
             RequestFileActivity.this.packet.changeToACK();
             RequestFileActivity.this.toConnectDevice = src;
-            System.out.println("ACK: sending ack from " + RequestFileActivity.this.mDeviceName +
-                    " to: " + src);
+            System.out.println("ACK: sending ack to:" + src);
             String file = "ackSent";
 
             final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
@@ -651,9 +634,7 @@ public class RequestFileActivity extends AppCompatActivity {
                 out = new PrintWriter(client.getOutputStream(), true);
 
                 if (packet == null) {
-                    CharSequence text = "Request Error";
-                    int duration = Toast.LENGTH_SHORT;
-                    Toast.makeText(context, text, duration).show();
+                    Log.e("Server", "packet is null");
                     throw new NoPacketException();
                 }
 
