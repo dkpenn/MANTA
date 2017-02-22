@@ -343,7 +343,7 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
      * Assume the status is 0 since this is the first time it's been seen
      */
     void addResponse(String filename, String src) {
-        String query = "INSERT INTO " + TABLE_REQUEST + " (" + COLUMN_FILENAME + ", " +
+        String query = "INSERT INTO " + TABLE_RESPONSE + " (" + COLUMN_FILENAME + ", " +
                 COLUMN_STATUS + ", " + COLUMN_SRC + ") VALUES " + "(\"" + filename + "\", " +
                 Integer.toString(0) + ", \"" + src + "\");";
         SQLiteDatabase db = this.getWritableDatabase();
