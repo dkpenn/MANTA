@@ -179,7 +179,7 @@ public class RequestFileActivity extends AppCompatActivity {
         new OFileClientAsyncTask().execute(addresses);
     }
 
-    public void deleteTempData() {
+    public void deleteTempData(View view) {
         MySQLLiteHelper db = MySQLLiteHelper.getHelper(this);
         db.deleteAllRequests();
         db.deleteAllFilterRequests();
