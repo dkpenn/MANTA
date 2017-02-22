@@ -184,6 +184,7 @@ public class RequestFileActivity extends AppCompatActivity {
         db.deleteAllRequests();
         db.deleteAllFilterRequests();
         db.deleteAllResponses();
+        Log.d("deleteTempData", "finished");
     }
 
     /* register the broadcast receiver with the intent values to be matched */
