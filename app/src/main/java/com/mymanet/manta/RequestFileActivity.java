@@ -561,7 +561,7 @@ public class RequestFileActivity extends AppCompatActivity {
             RequestFileActivity.this.toConnectDevice = "Pia";
             System.out.println("BROADCAST: changed peer to connect to to be Pia");
             mBroadcastHandler
-                    .postDelayed(mServiceBroadcastingRunnable, 1000);
+                    .postDelayed(mServiceBroadcastingRunnable, 2000);
             //lookForPeers();
             // TODO broadcast to friends (not sender)
             // here just broadcasting to one friend
