@@ -59,6 +59,8 @@ class Packet {
 
     void decrPathPosition() { this.pathPosition--; }
 
+    int getPathPosition() { return this.pathPosition; }
+
     void addToPath(String node) {
         this.path.add(node);
     }
@@ -84,7 +86,6 @@ class Packet {
             sb.append('\t');
         }
         sb.deleteCharAt(sb.length()-1);
-        sb.append('\n');
         return sb.toString();
     }
 

@@ -156,19 +156,6 @@ public class RequestFileActivity extends AppCompatActivity {
         }
     };
 
-    /*http://stackoverflow.com/questions/26643989/android-how-to-get-current-device-wifi-direct-name
-    * get device name of this device*/
-
-//    public static String getHostName(String defValue) {
-//        try {
-//            Method getString = Build.class.getDeclaredMethod("getString", String.class);
-//            getString.setAccessible(true);
-//            return getString.invoke(null, "net.hostname").toString();
-//        } catch (Exception ex) {
-//            return defValue;
-//        }
-//    }
-
     private void startServer(WifiP2pInfo wifiP2pInfo) {
         new OFileServerAsyncTask().execute();
     }
@@ -283,7 +270,6 @@ public class RequestFileActivity extends AppCompatActivity {
             WifiP2pDevice firstDevice = null;
 
             for (WifiP2pDevice device : deviceList.getDeviceList()) {
-                System.out.println("to connect device: " + this.toConnectDevice);
                 if (device.deviceName.equals(this.toConnectDevice)) {
                     firstDevice = device;
                     break;
@@ -555,6 +541,9 @@ public class RequestFileActivity extends AppCompatActivity {
             return null;
         }
 
+        /**
+         * broadcast a request to friends
+         */
         void broadcastRequest() {
             Context context = getApplicationContext();
             final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
@@ -681,7 +670,7 @@ public class RequestFileActivity extends AppCompatActivity {
                         out.println(packet.getFilename());
                         out.println(packet.getTimeToLive() + "");
                         out.println(packet.pathToString());
-                        out.println(packet.pathPosition + "");
+                        out.println(packet.getPathPosition() + "");
                         break;
                     default:
                         break;
