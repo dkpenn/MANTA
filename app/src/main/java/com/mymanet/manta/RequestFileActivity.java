@@ -237,27 +237,35 @@ public class RequestFileActivity extends AppCompatActivity {
     }
 
     public void lookForPeers() {
-        mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
+        if (this.packet != null) {
+            mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
 
-            @Override
-            public void onSuccess() {
-                Context context = getApplicationContext();
-                CharSequence text = "Discovery succeeded";
-                int duration = Toast.LENGTH_SHORT;
+                @Override
+                public void onSuccess() {
+                    Context context = getApplicationContext();
+                    CharSequence text = "Discovery succeeded";
+                    int duration = Toast.LENGTH_SHORT;
 
-                Toast toast = Toast.makeText(context, text, duration);
-                toast.show();
-            }
+                    Toast toast = Toast.makeText(context, text, duration);
+                    toast.show();
+                }
 
-            @Override
-            public void onFailure(int i) {
-                Context context = getApplicationContext();
-                CharSequence text = "Discovery failed";
-                int duration = Toast.LENGTH_SHORT;
-                Toast.makeText(context, text, duration).show();
-                Log.d("Discovery Failure", "reason " + i);
-            }
-        });
+                @Override
+                public void onFailure(int i) {
+                    Context context = getApplicationContext();
+                    CharSequence text = "Discovery failed";
+                    int duration = Toast.LENGTH_SHORT;
+                    Toast.makeText(context, text, duration).show();
+                    Log.d("Discovery Failure", "reason " + i);
+                }
+            });
+        } else {
+            Context context = getApplicationContext();
+            CharSequence text = "Packet is null";
+            int duration = Toast.LENGTH_SHORT;
+            Toast.makeText(context, text, duration).show();
+            Log.d("LookforPeers", "packet is null");
+        }
     }
 
     /**
@@ -269,46 +277,55 @@ public class RequestFileActivity extends AppCompatActivity {
      */
     public void connectToFirstDevice(WifiP2pDeviceList deviceList) {
 
-        // get first device
-        WifiP2pDevice firstDevice = null;
+        if(this.packet != null) {
+            // get first device
+            WifiP2pDevice firstDevice = null;
 
-        for (WifiP2pDevice device : deviceList.getDeviceList()) {
-            System.out.println("to connect device: " + this.toConnectDevice);
-            if (device.deviceName.equals(this.toConnectDevice)) {
-                firstDevice = device;
-                break;
+            for (WifiP2pDevice device : deviceList.getDeviceList()) {
+                System.out.println("to connect device: " + this.toConnectDevice);
+                if (device.deviceName.equals(this.toConnectDevice)) {
+                    firstDevice = device;
+                    break;
+                }
+            }
+
+            if (firstDevice == null) {
+                Log.d("connectToFirstDevice", "device is not found");
+                return;
+            }
+
+            // connect to device
+            if (firstDevice != null) {
+
+                WifiP2pConfig config = new WifiP2pConfig();
+                config.deviceAddress = firstDevice.deviceAddress;
+                config.groupOwnerIntent = 15;
+
+                mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
+                    @Override
+                    public void onSuccess() {
+                        Context context = getApplicationContext();
+                        CharSequence text = "Connection Successful: In Progress";
+                        int duration = Toast.LENGTH_SHORT;
+                        Toast.makeText(context, text, duration).show();
+                    }
+
+                    @Override
+                    public void onFailure(int i) {
+                        Context context = getApplicationContext();
+                        CharSequence text = "Connection Failed: In Progress";
+                        int duration = Toast.LENGTH_SHORT;
+                        Toast.makeText(context, text, duration).show();
+                    }
+                });
             }
         }
-
-        if (firstDevice == null) {
-            Log.d("connectToFirstDevice", "device is not found");
-            return;
-        }
-
-        // connect to device
-        if (firstDevice != null) {
-
-            WifiP2pConfig config = new WifiP2pConfig();
-            config.deviceAddress = firstDevice.deviceAddress;
-            config.groupOwnerIntent = 15;
-
-            mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
-                @Override
-                public void onSuccess() {
-                    Context context = getApplicationContext();
-                    CharSequence text = "Connection Successful: In Progress";
-                    int duration = Toast.LENGTH_SHORT;
-                    Toast.makeText(context, text, duration).show();
-                }
-
-                @Override
-                public void onFailure(int i) {
-                    Context context = getApplicationContext();
-                    CharSequence text = "Connection Failed: In Progress";
-                    int duration = Toast.LENGTH_SHORT;
-                    Toast.makeText(context, text, duration).show();
-                }
-            });
+        else {
+            Context context = getApplicationContext();
+            CharSequence text = "Packet is null";
+            int duration = Toast.LENGTH_SHORT;
+            Toast.makeText(context, text, duration).show();
+            Log.d("connectToFirstDevice", "packet is null");
         }
     }
 
@@ -622,9 +639,8 @@ public class RequestFileActivity extends AppCompatActivity {
             if(RequestFileActivity.this.packet == null) {
                 Log.d("ServerAsyncTask", "no packet is supplied");
             }
+
             System.out.println("server started");
-
-
 
             /** Create a server socket and wait for client connections. This
              * call blocks until a connection is accepted from a client
