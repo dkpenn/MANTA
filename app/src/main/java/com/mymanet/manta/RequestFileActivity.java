@@ -545,7 +545,6 @@ public class RequestFileActivity extends AppCompatActivity {
             System.out.println("BROADCAST: changed peer to connect to to be Pia");
             mBroadcastHandler
                     .postDelayed(mServiceBroadcastingRunnable, 2000);
-            //lookForPeers();
             // TODO broadcast to friends (not sender)
             // here just broadcasting to one friend
         }
@@ -582,8 +581,8 @@ public class RequestFileActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String results) {
             disconnect();
-            lookForPeers();
-//            if(RequestFileActivity.this.packet != null) {
+            if(RequestFileActivity.this.packet != null) {
+                lookForPeers();
 //              switch (RequestFileActivity.this.packet.getPacketType()) {
 //                  case REQUEST:
 //                      broadcastRequest();
@@ -591,18 +590,16 @@ public class RequestFileActivity extends AppCompatActivity {
 //                  default:
 //                      break;
 //              }
-//            }
-//            else {
-
-
-//                Context context = getApplicationContext();
-//                int duration = Toast.LENGTH_SHORT;
-//                Toast.makeText(context, progress, duration).show();
-//                Intent intent = new Intent(context, MainActivity.class);
-//                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//                context.startActivity(intent);
             }
-//        }
+            else {
+                Context context = getApplicationContext();
+                int duration = Toast.LENGTH_SHORT;
+                Toast.makeText(context, progress, duration).show();
+                Intent intent = new Intent(context, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
+            }
+        }
 
     }
 
@@ -667,7 +664,7 @@ public class RequestFileActivity extends AppCompatActivity {
                         out.println(packet.getFilename());
                         out.println(packet.getTimeToLive() + "");
                         out.println(packet.pathToString());
-                        out.println(packet.pathPosition);
+                        out.println(packet.pathPosition + "");
                         break;
                     default:
                         break;
