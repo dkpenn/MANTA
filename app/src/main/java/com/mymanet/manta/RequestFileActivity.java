@@ -406,22 +406,16 @@ public class RequestFileActivity extends AppCompatActivity {
                 Log.v("client", packetTypeString);
                 PacketType packetType = PacketType.fromInt(Integer.parseInt(packetTypeString));
 
-                Packet pkt = null;
-                String srcDevice;
-                String filename;
-                int ttl;
-                String path;
-                int pathPosition;
+                String srcDevice = in.readLine();
+                String filename = in.readLine();
+                int ttl = Integer.parseInt(in.readLine());
+                String path = in.readLine();
+                int pathPosition = Integer.parseInt(in.readLine());
+                Packet pkt = new Packet(filename, ttl, srcDevice, packetType, path, pathPosition);
 
                 System.out.println("got packet");
                 switch (packetType) {
                     case REQUEST:
-                        srcDevice = in.readLine();
-                        filename = in.readLine();
-                        ttl = Integer.parseInt(in.readLine());
-                        path = in.readLine();
-                        pathPosition = Integer.parseInt(in.readLine());
-                        pkt = new Packet(filename, ttl, srcDevice, packetType, path, pathPosition);
 
                         System.out.println("request packet for: " + filename + " from: " + srcDevice);
                         progress = "received packet";
@@ -442,52 +436,46 @@ public class RequestFileActivity extends AppCompatActivity {
                                     RequestFileActivity.this.toConnectDevice + "\nsrc: " + srcDevice);
                             System.out.println("found file: " +
                                     filename);
-                            sendAck(srcDevice);
+                            sendAck();
                             db.addResponse(filename, srcDevice);
 
                         } else {
-                            // TODO uncomment
                             progress = "to broadcast packet";
                             broadcastRequest();
                         }
 
-                        final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-                                "hey.txt");
-                        f.createNewFile();
                         break;
                     case ACK:
-                        srcDevice = in.readLine();
-                        filename = in.readLine();
-                        ttl = Integer.parseInt(in.readLine());
-                        path = in.readLine();
-                        pathPosition = Integer.parseInt(in.readLine());
-                        pkt = new Packet(filename, ttl, srcDevice, packetType, path, pathPosition);
 
                         System.out.println("ack packet for: " + filename + " from: " + srcDevice);
                         progress = "received packet";
 
-                        pkt.decrPathPosition();
-                        RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
+                        if (WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
+                            RequestFileActivity.this.packet = pkt;
+                            sendSend(filename);
+                        } else {
+                            pkt.decrPathPosition();
+                            RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
+                            RequestFileActivity.this.packet = pkt;
+                        }
+
                         System.out.println("ack sending to " + RequestFileActivity.this.toConnectDevice);
-                        RequestFileActivity.this.packet = pkt;
 
                         break;
                     case SEND:
+
+                        if (RequestFileActivity.this.packet.isLast(WifiDirectBroadcastReceiver.mDevice.deviceName)) {
+                            RequestFileActivity.this.packet = pkt;
+                            sendFilePacket(filename);
+                        } else {
+                            pkt.decrPathPosition();
+                            RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
+                            RequestFileActivity.this.packet = pkt;
+                        }
                         break;
                     default:
                         break;
                 }
-
-                String file;
-                if (pkt != null) {
-                    file = pkt.getFilename();
-                } else {
-                    file = "whatup.txt";
-                }
-                final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-                        file);
-
-                f.createNewFile();
 
             } catch (FileNotFoundException e) {
                 Log.e("request file", e.getMessage());
@@ -518,7 +506,6 @@ public class RequestFileActivity extends AppCompatActivity {
                         ioex.printStackTrace();
                     }
                 }
-//                disconnect();
 
             }
 
@@ -537,18 +524,18 @@ public class RequestFileActivity extends AppCompatActivity {
             mBroadcastHandler
                     .postDelayed(mServiceBroadcastingRunnable, 2000);
             // TODO broadcast to friends (not sender)
-            // here just broadcasting to one friend
+            // here just unicasting to one friend
         }
 
         /**
          * send ACK backwards through network
-         *
-         * @param src device REQ came from, and ACK should go to
          */
-        void sendAck(String src) {
+        void sendAck() {
             RequestFileActivity.this.packet.changeToACK();
-            RequestFileActivity.this.toConnectDevice = src;
-            System.out.println("ACK: sending ack to:" + src);
+            String node = RequestFileActivity.this.packet.getNodeAtPathPosition();
+
+            RequestFileActivity.this.toConnectDevice = node;
+            System.out.println("ACK: sending ack to:" + node);
             String file = "ackSent";
 
             final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
@@ -558,6 +545,26 @@ public class RequestFileActivity extends AppCompatActivity {
                 f.createNewFile();
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+        }
+
+        void sendSend(String filename) {
+            RequestFileActivity.this.packet.changeToSEND();
+            final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
+            if (db.requestHasStatus(filename, 0)) {
+                db.updateRequest(filename, 1);
+                String node = RequestFileActivity.this.packet.getNodeAtPathPosition();
+                RequestFileActivity.this.toConnectDevice = node;
+            }
+        }
+
+        void sendFilePacket(String filename) {
+            RequestFileActivity.this.packet.changeToFILE();
+            final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
+            if (db.responseHasStatus(filename, 0)) {
+                db.updateResponse(filename, RequestFileActivity.this.packet.getSrc(), 1);
+                String node = RequestFileActivity.this.packet.getNodeAtPathPosition();
+                RequestFileActivity.this.toConnectDevice = node;
             }
         }
 
@@ -647,15 +654,21 @@ public class RequestFileActivity extends AppCompatActivity {
                         int translatedPacketType = PacketType.toInt(packet.getPacketType());
                         //out.println(translatedPacketType + "\n");
                         out.println("1");
-                        out.println(packet.getSrc());
-                        out.println(packet.getFilename());
-                        out.println(packet.getTimeToLive() + "");
-                        out.println(packet.pathToString());
-                        out.println(packet.getPathPosition() + "");
                         break;
+                    case ACK:
+                        out.println("2");
+                        break;
+                    case SEND:
+                        out.println("3");
                     default:
                         break;
                 }
+
+                out.println(packet.getSrc());
+                out.println(packet.getFilename());
+                out.println(packet.getTimeToLive() + "");
+                out.println(packet.pathToString());
+                out.println(packet.getPathPosition() + "");
 
                 /**
                  *  If this code is reached, a client has connected and transferred data
@@ -672,12 +685,8 @@ public class RequestFileActivity extends AppCompatActivity {
 //                serverSocket.close();
 //
 //                boolean returned = returnFile(filename);
-                final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-                        "done.txt");
 
-                f.createNewFile();
-
-                /*ONLY FOR DEMO PURPOSES (ALSO ASSUMING ONLY SEND TO ONE PEER) */
+                /* ONLY FOR DEMO PURPOSES (ALSO ASSUMING ONLY SEND TO ONE PEER) */
                 RequestFileActivity.this.packet = null;
 
             } catch (NoPacketException e) {

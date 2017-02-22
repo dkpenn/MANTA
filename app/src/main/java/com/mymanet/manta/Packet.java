@@ -67,11 +67,26 @@ class Packet {
 
     String getNodeAtPathPosition() { return this.path.get(this.pathPosition); }
 
+    boolean isLast(String device) { return device.equals(this.path.get(this.path.size() - 1)); }
+
     void changePacketType(PacketType type) { this.type = type; }
 
+    /**
+     * when sending ack, set pathPosition to node before current node
+     */
     void changeToACK() {
         this.type = PacketType.ACK;
-        this.pathPosition = this.path.size() - 1;
+        this.pathPosition = this.path.size() - 2;
+    }
+
+    void changeToSEND() {
+        this.type = PacketType.SEND;
+        this.pathPosition = 1;
+    }
+
+    void changeToFILE() {
+        this.type = PacketType.FILE;
+        this.pathPosition = this.path.size() - 2;
     }
 
     private List<String> toListOfNodes(String path) {

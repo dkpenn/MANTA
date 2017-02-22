@@ -281,17 +281,19 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
     /**
      * Checks if request has previously been made by this device
      * @param filename requested file
-     * @return success
+     * @param status expected status
+     * @return true if correct
      */
-    boolean requestMade(String filename) {
+    boolean requestHasStatus(String filename, int status) {
         String query = "SELECT * FROM " + TABLE_REQUEST + " WHERE " + COLUMN_FILENAME + "= " +
-                "\"" + filename + "\";";
+                "\"" + filename + "\" AND " + COLUMN_STATUS + " = " + Integer.toString(status) + ";";
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery(query, null);
         boolean exists = cursor.moveToFirst();
         cursor.close();
         return exists;
     }
+
 
     /**
      * Update status of request
@@ -361,6 +363,16 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
                 "AND " + COLUMN_SRC + "= \"" + src + "\";";
         SQLiteDatabase db = this.getWritableDatabase();
         db.execSQL(query);
+    }
+
+    boolean responseHasStatus(String filename, int status) {
+        String query = "SELECT * FROM " + TABLE_RESPONSE + " WHERE " + COLUMN_FILENAME + "= " +
+                "\"" + filename + "\" AND " + COLUMN_STATUS + " = " + Integer.toString(status) + ";";
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(query, null);
+        boolean exists = cursor.moveToFirst();
+        cursor.close();
+        return exists;
     }
 
     /**
