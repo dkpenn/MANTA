@@ -38,8 +38,11 @@ public class UploadFileActivity extends AppCompatActivity {
         /* First check if any files already exist in saved */
         /* TODO: Add action to filter out files that already exist*/
 
-        File imageDir = Environment.getExternalStoragePublicDirectory("/" +
-                "DCIM/Camera");
+//        File imageDir = Environment.getExternalStoragePublicDirectory("/" +
+//                "DCIM/Camera");
+
+        File imageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+
         Boolean isDir = imageDir.isDirectory();
         //Get list of images
         String [] images = imageDir.list();
