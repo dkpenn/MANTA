@@ -11,7 +11,6 @@ import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Debug;
 import android.os.Environment;
@@ -33,7 +32,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -72,15 +70,23 @@ public class RequestFileActivity extends AppCompatActivity {
 
         mEdit = (EditText) findViewById(R.id.requested_file);
 
+        /** Initialize Wifi P2P manager and channel */
         mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
         mChannel = mManager.initialize(this, getMainLooper(), null);
+
+        /** Set up listeners for wifi p2p related signals*/
+
         mPeerListListener = new WifiP2pManager.PeerListListener() {
             @Override
             public void onPeersAvailable(WifiP2pDeviceList wifiP2pDeviceList) {
-                connectToFirstDevice(wifiP2pDeviceList);
+                connectToSpecificDevice(wifiP2pDeviceList);
             }
         };
 
+        /**Invariant is that the person who initiated the connection will act as the server in
+         * this TCP connection. This is done for convenience, as the group owner's address
+         * is available all those in the group, so the device being connected to can initiate a
+         * connection with the group owner. */
         mConnectionInfoListener = new WifiP2pManager.ConnectionInfoListener() {
             @Override
             public void onConnectionInfoAvailable(WifiP2pInfo wifiP2pInfo) {
@@ -90,13 +96,13 @@ public class RequestFileActivity extends AppCompatActivity {
                 int duration = Toast.LENGTH_SHORT;
                 Toast.makeText(context, text, duration).show();
 
-                //if not group owner, then send file as client
+                //if not group owner, start the client
                 if (!wifiP2pInfo.isGroupOwner) {
                     CharSequence text2 = "not group owner\n";
                     Toast.makeText(context, text2, duration).show();
-                    sendFile(wifiP2pInfo);
+                    startClient(wifiP2pInfo);
                 }
-                // if group owner, then receive file like server
+                // if group owner, then start the server
                 else {
                     CharSequence text2 = "group owner\n";
                     Toast.makeText(context, text2, duration).show();
@@ -106,9 +112,7 @@ public class RequestFileActivity extends AppCompatActivity {
         };
 
 
-        mBroadcastHandler = new Handler();
-        //mBroadcastHandler.postDelayed(mServiceBroadcastingRunnable, 1000);
-
+        /**Set up Receiver to intercept Wifi P2P related signals sent by the system */
         mReceiver = new WifiDirectBroadcastReceiver(mManager, mChannel, this, mPeerListListener,
                 mConnectionInfoListener);
 
@@ -118,11 +122,43 @@ public class RequestFileActivity extends AppCompatActivity {
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
 
+        /**Handler to be used for performing delayed actions/runnable */
+        mBroadcastHandler = new Handler();
+        //mBroadcastHandler.postDelayed(mServiceBroadcastingRunnable, 1000);
     }
 
-    /* from stack overflow
-    * https://stackoverflow.com/questions/26300889/wifi-p2p-service-discovery-works-intermittently
-    * */
+    /**
+     *  register the broadcast receiver with the intent values to be matched
+     *  TODO: understand why we are registering and unregistering the server*/
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(mReceiver, mIntentFilter);
+    }
+
+    /**
+     *  unregister the broadcast receiver on pause
+     *  */
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(mReceiver);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+    }
+
+    /**
+     *  runnable instance of lookForPeers so it can be done with a delay
+     *  https://stackoverflow.com/questions/26300889/wifi-p2p-service-discovery-works-intermittently
+     */
     private Runnable mServiceBroadcastingRunnable = new Runnable() {
         @Override
         public void run() {
@@ -139,16 +175,28 @@ public class RequestFileActivity extends AppCompatActivity {
         }
     };
 
+    /***
+     * Action taken by the device acting as the server in the connection
+     * @param wifiP2pInfo
+     */
     private void startServer(WifiP2pInfo wifiP2pInfo) {
         new OFileServerAsyncTask().execute();
     }
 
-    private void sendFile(WifiP2pInfo wifiP2pInfo) {
+    /**
+     * Action taken by the device acting as the client in the connection
+     * @param wifiP2pInfo
+     */
+    private void startClient(WifiP2pInfo wifiP2pInfo) {
         InetAddress[] addresses = new InetAddress[1];
         addresses[0] = wifiP2pInfo.groupOwnerAddress;
         new OFileClientAsyncTask().execute(addresses);
     }
 
+    /**
+     * Deleting data about requests, requests seen, and responses
+     * @param view
+     */
     public void deleteTempData(View view) {
         MySQLLiteHelper db = MySQLLiteHelper.getHelper(this);
         db.deleteAllRequests();
@@ -157,23 +205,9 @@ public class RequestFileActivity extends AppCompatActivity {
         Log.d("deleteTempData", "finished");
     }
 
-    /* register the broadcast receiver with the intent values to be matched */
-    @Override
-    protected void onResume() {
-        super.onResume();
-        registerReceiver(mReceiver, mIntentFilter);
-    }
-
-    /* unregister the broadcast receiver */
-    @Override
-    protected void onPause() {
-        super.onPause();
-        unregisterReceiver(mReceiver);
-    }
-
     /**
-     * When user clicks to request a file, tries to make connections with neighbors
-     *
+     * When user clicks to request a file, broadcast request for file to
+     * neighbors
      * @param view
      */
     public void requestByFilename(View view) {
@@ -188,10 +222,20 @@ public class RequestFileActivity extends AppCompatActivity {
             // TODO move to next request
             return;
         }
+
+        //retrieve device name from wifi broadcast receiver
         String deviceName = WifiDirectBroadcastReceiver.mDevice.deviceName;
+
+        //set up request packet to be broadcast
         packet = new Packet(filename, TIME_TO_LIVE, deviceName, PacketType.REQUEST);
         packet.addToPath(deviceName);
 
+        //add request to database
+        MySQLLiteHelper db = MySQLLiteHelper.getHelper(this);
+        db.addRequest(filename, 0);
+        db.addFilterRequest(filename, deviceName);
+
+        //change screens
         setContentView(R.layout.activity_propagate_request);
 
         lookForPeers();
@@ -207,6 +251,9 @@ public class RequestFileActivity extends AppCompatActivity {
         return db.containsFile(filename);
     }
 
+    /**
+     * start peer discovery if there is a packet to process
+     */
     public void lookForPeers() {
         if (this.packet != null) {
             mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
@@ -232,43 +279,50 @@ public class RequestFileActivity extends AppCompatActivity {
             });
         } else {
             Context context = getApplicationContext();
-            CharSequence text = "Packet is null";
+            CharSequence text = "Packet is null; no request to process";
             int duration = Toast.LENGTH_SHORT;
             Toast.makeText(context, text, duration).show();
-            Log.d("LookforPeers", "packet is null");
+            Log.d("LookforPeers", "packet is null; no request to process");
         }
     }
 
     /**
-     * Initial callback method for peer list listener.
      * Once the state of the peer list listener changes,
-     * this method is called
+     * this method is called and executed.
      *
-     * @param deviceList
+     * Only will initiate connection if packet is not null and specified device can be found
+     *
+     * @param deviceList : list of wifi p2p devices discoverable from this device
      */
-    public void connectToFirstDevice(WifiP2pDeviceList deviceList) {
+    public void connectToSpecificDevice(WifiP2pDeviceList deviceList) {
 
         if(this.packet != null) {
-            // get first device
-            WifiP2pDevice firstDevice = null;
+
+            WifiP2pDevice specificDevice = null;
 
             for (WifiP2pDevice device : deviceList.getDeviceList()) {
                 if (device.deviceName.equals(this.toConnectDevice)) {
-                    firstDevice = device;
+                    specificDevice = device;
                     break;
                 }
             }
 
-            if (firstDevice == null) {
-                Log.d("connectToFirstDevice", "device is not found");
+            if (specificDevice == null) {
+                Log.d("connectToSpecificDevice", "device is not found");
                 return;
             }
 
             // connect to device
-            if (firstDevice != null) {
+            if (specificDevice != null) {
 
                 WifiP2pConfig config = new WifiP2pConfig();
-                config.deviceAddress = firstDevice.deviceAddress;
+                config.deviceAddress = specificDevice.deviceAddress;
+
+                /** Setting the group owner intent to highest number makes the device requesting the
+                 * connection the most likely to be the group owner.
+                 * This is important for the invariant that we have regarding who the group owner is
+                 * (See ConnectionInfoListener in onCreate for more details)
+                */
                 config.groupOwnerIntent = 15;
 
                 mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
@@ -295,12 +349,12 @@ public class RequestFileActivity extends AppCompatActivity {
             CharSequence text = "Packet is null";
             int duration = Toast.LENGTH_SHORT;
             Toast.makeText(context, text, duration).show();
-            Log.d("connectToFirstDevice", "packet is null");
+            Log.d("connectToSpecificDevice", "packet is null");
         }
     }
 
     /**
-     * disconnect from stack overflow
+     * Disconnect from a wifi p2p connection
      * http://stackoverflow.com/questions/18679481/wifi-direct-end-connection-to-peer-on-android
      */
     protected void disconnect() {
@@ -308,6 +362,7 @@ public class RequestFileActivity extends AppCompatActivity {
             mManager.requestGroupInfo(mChannel, new WifiP2pManager.GroupInfoListener() {
                 @Override
                 public void onGroupInfoAvailable(WifiP2pGroup group) {
+                    //apparently only remove if you are group owner (server is always group owner)
                     if (group != null && mManager != null && mChannel != null
                             && group.isGroupOwner()) {
                         mManager.removeGroup(mChannel, new WifiP2pManager.ActionListener() {
@@ -334,15 +389,6 @@ public class RequestFileActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-    }
 
     /**
      * client side of connection
@@ -363,7 +409,8 @@ public class RequestFileActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(InetAddress[] params) {
 
-            /* busy wait to get server hopefully running */
+            /* busy wait to get server hopefully running,
+             * TODO: check if we can remove this and it still works */
             for (int i = 0; i < 1000; i++) {
 
             }
@@ -371,11 +418,13 @@ public class RequestFileActivity extends AppCompatActivity {
             System.out.println("client started");
 
             Context context = getApplicationContext();
+
             InetAddress groupOwnerAddress = params[0];
             int port = 8888;
-            int len;
+            //int len; //apparently not used so removed
             Socket socket = new Socket();
-            byte[] buf = new byte[1024];
+            //byte[] buf = new byte[1024]; //also apparently not used, so removed
+
             OutputStream outputStream = null;
             InputStream inputStream = null;
             InputStream fileInputStream = null;
@@ -387,13 +436,15 @@ public class RequestFileActivity extends AppCompatActivity {
                  */
                 socket.bind(null);
 
-                /*changed timeout to 1000ms so connection has time to happen */
+                /*changed timeout to 5500ms so connection has time to happen */
                 socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 5500);
 
+                /*debugger*/
                 if (Debug.isDebuggerConnected())
                     Debug.waitForDebugger();
 
                 progress = "connected";
+
                 /* get read and write ends of stream socket */
                 outputStream = socket.getOutputStream();
                 inputStream = socket.getInputStream();
@@ -402,8 +453,12 @@ public class RequestFileActivity extends AppCompatActivity {
                         new InputStreamReader(inputStream)
                 );
 
+                /** Read information sent by server about packet */
+
                 String packetTypeString = in.readLine();
+
                 Log.v("client", packetTypeString);
+
                 PacketType packetType = PacketType.fromInt(Integer.parseInt(packetTypeString));
 
                 String srcDevice = in.readLine();
@@ -411,37 +466,46 @@ public class RequestFileActivity extends AppCompatActivity {
                 int ttl = Integer.parseInt(in.readLine());
                 String path = in.readLine();
                 int pathPosition = Integer.parseInt(in.readLine());
+
                 Packet pkt = new Packet(filename, ttl, srcDevice, packetType, path, pathPosition);
 
                 System.out.println("got packet");
+
                 switch (packetType) {
                     case REQUEST:
 
                         System.out.println("request packet for: " + filename + " from: " + srcDevice);
                         progress = "received packet";
+
                         // if request has been seen before, ignore it, otherwise record it
-                        final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
+//                        final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
+//
 //                        if (db.requestSeen(filename, srcDevice)) {
+//                            //stop processing packet (ignore)
+//                            //return?
 //                            break;
 //                        } else {
 //                            db.addFilterRequest(filename, srcDevice);
 //                        }
+
+                        //This packet will be processed
                         RequestFileActivity.this.packet = pkt;
                         String deviceName = WifiDirectBroadcastReceiver.mDevice.deviceName;
-
+                        //Add self to packet path
                         RequestFileActivity.this.packet.addToPath(deviceName);
 
                         if (containsFile(filename)) {
+
                             System.out.println("to connect device: " +
                                     RequestFileActivity.this.toConnectDevice + "\nsrc: " + srcDevice);
+
                             System.out.println("found file: " +
                                     filename);
-                            sendAck();
-                            db.addResponse(filename, srcDevice);
-
+                            //change packet to ACK
+                            sendAck(pkt);
                         } else {
                             progress = "to broadcast packet";
-                            broadcastRequest();
+                            broadcastRequest(pkt);
                         }
 
                         break;
@@ -450,6 +514,7 @@ public class RequestFileActivity extends AppCompatActivity {
                         System.out.println("ack packet for: " + filename + " from: " + srcDevice);
                         progress = "received packet";
 
+                        //if we are the requestor, send a please send packet
                         if (WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
                             RequestFileActivity.this.packet = pkt;
                             sendSend(filename);
@@ -513,11 +578,21 @@ public class RequestFileActivity extends AppCompatActivity {
         }
 
         /**
-         * broadcast a request to friends
+         * broadcast a request to friends if not already sent
          */
-        void broadcastRequest() {
+        void broadcastRequest(Packet pkt) {
             Context context = getApplicationContext();
             final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
+
+            if (db.requestSeen(pkt.getFilename(), pkt.getSrc())) {
+                //stop processing packet (ignore)
+                //return?
+                return;
+            } else {
+
+                db.addFilterRequest(pkt.getFilename(), pkt.getSrc());
+            }
+
             List<String> peers = db.getTrustedPeers();
             RequestFileActivity.this.toConnectDevice = "Pia";
             System.out.println("BROADCAST: changed peer to connect to to be Pia");
@@ -528,40 +603,67 @@ public class RequestFileActivity extends AppCompatActivity {
         }
 
         /**
-         * send ACK backwards through network
+         * send ACK backwards on path if not already done
          */
-        void sendAck() {
-            RequestFileActivity.this.packet.changeToACK();
-            String node = RequestFileActivity.this.packet.getNodeAtPathPosition();
+        void sendAck(Packet pkt) {
 
-            RequestFileActivity.this.toConnectDevice = node;
-            System.out.println("ACK: sending ack to:" + node);
-            String file = "ackSent";
 
-            final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-                    file);
 
-            try {
-                f.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
+            final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
+
+            //check if correct state
+            if(!db.responseExists(packet.getFilename(), packet.getSrc())) {
+                RequestFileActivity.this.packet.changeToACK();
+                String node = RequestFileActivity.this.packet.getNodeAtPathPosition();
+                RequestFileActivity.this.toConnectDevice = node;
+
+                db.addResponse(packet.getFilename(), packet.getSrc());
+
+                //TEMP -- for testing/debugging purposes
+                System.out.println("ACK: sending ack to:" + node);
+                String file = "ackSent";
+                final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+                        file);
+
+                try {
+                    f.createNewFile();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
+            else {
+                //ignore
+                RequestFileActivity.this.packet = null;
+            }
+
+
+
+
         }
 
+        /**
+         * Send send packet only if not done so already
+         * @param filename
+         */
         void sendSend(String filename) {
             RequestFileActivity.this.packet.changeToSEND();
             final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
+
             if (db.requestHasStatus(filename, 0)) {
                 db.updateRequest(filename, 1);
                 String node = RequestFileActivity.this.packet.getNodeAtPathPosition();
                 RequestFileActivity.this.toConnectDevice = node;
+            }
+            else {
+                //ignore the acknowledgement
+                RequestFileActivity.this.packet = null;
             }
         }
 
         void sendFilePacket(String filename) {
             RequestFileActivity.this.packet.changeToFILE();
             final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
-            if (db.responseHasStatus(filename, 0)) {
+            if (db.responseHasStatus(filename, RequestFileActivity.this.packet.getSrc(), 0)) {
                 db.updateResponse(filename, RequestFileActivity.this.packet.getSrc(), 1);
                 String node = RequestFileActivity.this.packet.getNodeAtPathPosition();
                 RequestFileActivity.this.toConnectDevice = node;

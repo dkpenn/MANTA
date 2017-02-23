@@ -76,6 +76,7 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
+    // attribution?
     public static synchronized MySQLLiteHelper getHelper(Context context) {
         if (instance == null) {
             instance = new MySQLLiteHelper(context);
@@ -365,9 +366,20 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
         db.execSQL(query);
     }
 
-    boolean responseHasStatus(String filename, int status) {
+    boolean responseHasStatus(String filename, String src, int status) {
         String query = "SELECT * FROM " + TABLE_RESPONSE + " WHERE " + COLUMN_FILENAME + "= " +
-                "\"" + filename + "\" AND " + COLUMN_STATUS + " = " + Integer.toString(status) + ";";
+                "\"" + filename + COLUMN_SRC + "= " + "\"" + src +
+                "\" AND " + COLUMN_STATUS + " = " + Integer.toString(status) + ";";
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(query, null);
+        boolean exists = cursor.moveToFirst();
+        cursor.close();
+        return exists;
+    }
+
+    boolean responseExists(String filename, String src) {
+        String query = "SELECT * FROM " + TABLE_RESPONSE + " WHERE " + COLUMN_FILENAME + "= " +
+                "\"" + filename + COLUMN_SRC + "= " + "\"" + src + ";";
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery(query, null);
         boolean exists = cursor.moveToFirst();
