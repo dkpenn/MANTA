@@ -484,14 +484,14 @@ public class RequestFileActivity extends AppCompatActivity {
 //                            db.addFilterRequest(filename, srcDevice);
 //                        }
 
-<<<<<<< HEAD
                         //This packet will be processed
-                        RequestFileActivity.this.packet = pkt;
+                        //RequestFileActivity.this.packet = pkt;
                         String deviceName = WifiDirectBroadcastReceiver.mDevice.deviceName;
                         //Add self to packet path
 
-                        RequestFileActivity.this.packet.addToPath(deviceName);
+                        //RequestFileActivity.this.packet.addToPath(deviceName);
 
+                        pkt.addToPath(deviceName);
                         // if the request has reached a fileowner, unicast this back along the path
                         // otherwise, broadcast request to other peers
                         if (containsFile(filename)) {
@@ -517,8 +517,8 @@ public class RequestFileActivity extends AppCompatActivity {
                         // if the ack has reached the requester, send a request for the file itself
                         // otherwise continue
                         if (WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
-                            RequestFileActivity.this.packet = pkt;
-                            sendSend(filename);
+                            //RequestFileActivity.this.packet = pkt;
+                            sendSend(pkt);
                         } else {
                             pkt.decrPathPosition();
                             RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
@@ -534,12 +534,12 @@ public class RequestFileActivity extends AppCompatActivity {
                         progress = "received packet";
 
                         // if fileowner has been reached, send the file back
-                        if (RequestFileActivity.this.packet.isLast(
+                        if (pkt.isLast(
                                 WifiDirectBroadcastReceiver.mDevice.deviceName)) {
-                            RequestFileActivity.this.packet = pkt;
-                            sendFilePacket(filename);
+                            //RequestFileActivity.this.packet = pkt;
+                            sendFilePacket(pkt);
                         } else {
-                            pkt.decrPathPosition();
+                            pkt.incrPathPosition();
                             RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
                             RequestFileActivity.this.packet = pkt;
                         }
@@ -609,22 +609,32 @@ public class RequestFileActivity extends AppCompatActivity {
             Context context = getApplicationContext();
             final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
 
-            if (db.requestSeen(pkt.getFilename(), pkt.getSrc())) {
-                //stop processing packet (ignore)
-                //return?
-                return;
-            } else {
+            if (!db.requestSeen(pkt.getFilename(), pkt.getSrc())) {
 
+                //filter request; ignore subsequent packets
                 db.addFilterRequest(pkt.getFilename(), pkt.getSrc());
+
+                // TODO broadcast to friends (not sender)
+                // here just unicasting to one friend
+                List<String> peers = db.getTrustedPeers();
+                RequestFileActivity.this.toConnectDevice = "Pia";
+                RequestFileActivity.this.packet = pkt;
+
+
+                System.out.println("BROADCAST: changed peer to connect to to be Pia");
+
+                mBroadcastHandler
+                        .postDelayed(mServiceBroadcastingRunnable, 2000);
+
+            } else {
+                //stop processing packet (ignore)
+                //make sure it is null
+                RequestFileActivity.this.packet = null;
+                return;
             }
 
-            List<String> peers = db.getTrustedPeers();
-            RequestFileActivity.this.toConnectDevice = "Pia";
-            System.out.println("BROADCAST: changed peer to connect to to be Pia");
-            mBroadcastHandler
-                    .postDelayed(mServiceBroadcastingRunnable, 2000);
-            // TODO broadcast to friends (not sender)
-            // here just unicasting to one friend
+
+
         }
 
         /**
@@ -632,20 +642,21 @@ public class RequestFileActivity extends AppCompatActivity {
          */
         void sendAck(Packet pkt) {
 
-
-
             final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
 
             //check if correct state
-            if(!db.responseExists(packet.getFilename(), packet.getSrc())) {
+            if(!db.responseExists(pkt.getFilename(), pkt.getSrc())) {
 
                 //setup packet and next-hop device
-                RequestFileActivity.this.packet.changeToACK();
-                String node = RequestFileActivity.this.packet.getNodeAtPathPosition();
-                RequestFileActivity.this.toConnectDevice = node;
+                pkt.changeToACK();
+                String node = pkt.getNodeAtPathPosition();
 
                 //add to database
-                db.addResponse(packet.getFilename(), packet.getSrc());
+                db.addResponse(pkt.getFilename(), pkt.getSrc());
+                db.addFilterRequest(pkt.getFilename(), pkt.getSrc());
+
+                RequestFileActivity.this.packet = pkt;
+                RequestFileActivity.this.toConnectDevice = node;
 
                 //TEMP -- for testing/debugging purposes
                 System.out.println("ACK: sending ack to:" + node);
@@ -660,26 +671,26 @@ public class RequestFileActivity extends AppCompatActivity {
                 }
             }
             else {
-                //ignore
+                //ignore this
                 RequestFileActivity.this.packet = null;
             }
-
-
 
 
         }
 
         /**
          * Send send packet only if not done so already
-         * @param filename
+         * @param pkt
          */
-        void sendSend(String filename) {
-            RequestFileActivity.this.packet.changeToSEND();
+        void sendSend(Packet pkt) {
             final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
 
-            if (db.requestHasStatus(filename, 0)) {
-                db.updateRequest(filename, 1);
-                String node = RequestFileActivity.this.packet.getNodeAtPathPosition();
+            if (db.requestHasStatus(pkt.getFilename(), 0)) {
+                pkt.changeToSEND();
+                String node = pkt.getNodeAtPathPosition();
+                db.updateRequest(pkt.getFilename(), 1);
+
+                RequestFileActivity.this.packet = pkt;
                 RequestFileActivity.this.toConnectDevice = node;
             }
             else {
@@ -688,13 +699,25 @@ public class RequestFileActivity extends AppCompatActivity {
             }
         }
 
-        void sendFilePacket(String filename) {
-            RequestFileActivity.this.packet.changeToFILE();
+        /**
+         * Send file if response is in right state
+         * @param pkt
+         */
+        void sendFilePacket(Packet pkt) {
+            pkt.changeToFILE();
+
             final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
-            if (db.responseHasStatus(filename, RequestFileActivity.this.packet.getSrc(), 0)) {
-                db.updateResponse(filename, RequestFileActivity.this.packet.getSrc(), 1);
-                String node = RequestFileActivity.this.packet.getNodeAtPathPosition();
+
+            if (db.responseHasStatus(pkt.getFilename(), pkt.getSrc(), 0)) {
+                db.updateResponse(pkt.getFilename(), pkt.getSrc(), 1);
+                String node = pkt.getNodeAtPathPosition();
+
                 RequestFileActivity.this.toConnectDevice = node;
+                RequestFileActivity.this.packet = packet;
+            }
+            else {
+                //ignore if not in right state
+                RequestFileActivity.this.packet = null;
             }
         }
 
