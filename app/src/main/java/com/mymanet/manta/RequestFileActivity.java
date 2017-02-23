@@ -613,10 +613,13 @@ public class RequestFileActivity extends AppCompatActivity {
 
             //check if correct state
             if(!db.responseExists(packet.getFilename(), packet.getSrc())) {
+
+                //setup packet and next-hop device
                 RequestFileActivity.this.packet.changeToACK();
                 String node = RequestFileActivity.this.packet.getNodeAtPathPosition();
                 RequestFileActivity.this.toConnectDevice = node;
 
+                //add to database
                 db.addResponse(packet.getFilename(), packet.getSrc());
 
                 //TEMP -- for testing/debugging purposes
