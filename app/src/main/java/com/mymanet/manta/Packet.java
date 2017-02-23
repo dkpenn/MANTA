@@ -1,23 +1,19 @@
 package com.mymanet.manta;
 
-import java.io.File;
-import java.io.InputStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 ;
 
 class Packet {
-    String src;
-    String filename;
-    int timeToLive;
-    int pathPosition;
-    PacketType type;
-    List<String> path;
+    private String src;
+    private String filename;
+    private int timeToLive;
+    private int pathPosition;
+    private PacketType type;
+    private List<String> path;
 
     Packet(String filename, int timeToLive, String src, PacketType type) {
         this.filename = filename;
@@ -69,8 +65,6 @@ class Packet {
 
     boolean isLast(String device) { return device.equals(this.path.get(this.path.size() - 1)); }
 
-    void changePacketType(PacketType type) { this.type = type; }
-
     /**
      * when sending ack, set pathPosition to node before current node
      */
@@ -79,22 +73,37 @@ class Packet {
         this.pathPosition = this.path.size() - 2;
     }
 
+    /**
+     * when sending send, set pathPosition to second node
+     */
     void changeToSEND() {
         this.type = PacketType.SEND;
         this.pathPosition = 1;
     }
 
+    /**
+     * when sending file, set pathPosition to node before current node
+     */
     void changeToFILE() {
         this.type = PacketType.FILE;
         this.pathPosition = this.path.size() - 2;
     }
 
-    private List<String> toListOfNodes(String path) {
-        path = path.replace("\n","");
-        return new ArrayList<String>(Arrays.asList(path.split("\t")));
+    void packetToStream(PrintWriter out, String type) {
+        out.println(type);
+        out.println(src);
+        out.println(filename);
+        out.println(timeToLive + "");
+        out.println(pathToString());
+        out.println(pathPosition + "");
     }
 
-    public String pathToString() {
+    private List<String> toListOfNodes(String path) {
+        path = path.replace("\n","");
+        return new ArrayList<>(Arrays.asList(path.split("\t")));
+    }
+
+    String pathToString() {
         StringBuffer sb = new StringBuffer();
         for(String node : path) {
             sb.append(node.toCharArray());
