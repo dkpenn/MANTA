@@ -718,12 +718,6 @@ public class RequestFileActivity extends AppCompatActivity {
                         break;
                 }
 
-                out.println(packet.getSrc());
-                out.println(packet.getFilename());
-                out.println(packet.getTimeToLive() + "");
-                out.println(packet.pathToString());
-                out.println(packet.getPathPosition() + "");
-
                 /**
                  *  If this code is reached, a client has connected and transferred data
                  */
