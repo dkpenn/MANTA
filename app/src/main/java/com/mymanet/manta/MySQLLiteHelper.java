@@ -387,8 +387,8 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
     }
 
     boolean responseExists(String filename, String src) {
-        String query = "SELECT * FROM " + TABLE_RESPONSE + " WHERE " + COLUMN_FILENAME + "= " +
-                "\"" + filename + COLUMN_SRC + "= " + "\"" + src + ";";
+        String query = "SELECT * FROM " + TABLE_RESPONSE + " WHERE " + COLUMN_FILENAME + " =" +
+                "\"" + filename + "\" AND " + COLUMN_SRC + " =" + "\"" + src + "\";";
         SQLiteDatabase db = this.getWritableDatabase();
         Cursor cursor = db.rawQuery(query, null);
         boolean exists = cursor.moveToFirst();
