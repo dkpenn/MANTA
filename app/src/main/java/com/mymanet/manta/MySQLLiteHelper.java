@@ -313,11 +313,16 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
      * Record new request made
      */
     void addRequest(String filename, int status) {
-        String query = "INSERT INTO " + TABLE_REQUEST + " (" + COLUMN_FILENAME + ", " +
-                COLUMN_STATUS + ") VALUES " + "(\"" + filename + "\", " + Integer.toString(status) +
-                ");";
-        SQLiteDatabase db = this.getWritableDatabase();
-        db.execSQL(query);
+        try {
+            String query = "INSERT INTO " + TABLE_REQUEST + " (" + COLUMN_FILENAME + ", " +
+                    COLUMN_STATUS + ") VALUES " + "(\"" + filename + "\", " + Integer.toString(status) +
+                    ");";
+            SQLiteDatabase db = this.getWritableDatabase();
+            db.execSQL(query);
+        } catch (android.database.sqlite.SQLiteConstraintException e) {
+            Log.e("Request table", "Filename " + filename + " already exists in table");
+        }
+
     }
 
     /**
@@ -346,11 +351,15 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
      * Assume the status is 0 since this is the first time it's been seen
      */
     void addResponse(String filename, String src) {
-        String query = "INSERT INTO " + TABLE_RESPONSE + " (" + COLUMN_FILENAME + ", " +
-                COLUMN_STATUS + ", " + COLUMN_SRC + ") VALUES " + "(\"" + filename + "\", " +
-                Integer.toString(0) + ", \"" + src + "\");";
-        SQLiteDatabase db = this.getWritableDatabase();
-        db.execSQL(query);
+        try {
+            String query = "INSERT INTO " + TABLE_RESPONSE + " (" + COLUMN_FILENAME + ", " +
+                    COLUMN_STATUS + ", " + COLUMN_SRC + ") VALUES " + "(\"" + filename + "\", " +
+                    Integer.toString(0) + ", \"" + src + "\");";
+            SQLiteDatabase db = this.getWritableDatabase();
+            db.execSQL(query);
+        } catch (android.database.sqlite.SQLiteConstraintException e) {
+            Log.e("Response table", "Filename " + filename + " already exists in table");
+        }
     }
 
     /**
@@ -424,10 +433,14 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
     }
 
     void addFilterRequest(String filename, String src) {
-        String query = "INSERT INTO " + TABLE_FILTER + " ( " + COLUMN_FILENAME + ", " + COLUMN_SRC +
-                ") VALUES (\"" + filename + "\", \"" + src + "\");";
-        SQLiteDatabase db = this.getWritableDatabase();
-        db.execSQL(query);
+        try {
+            String query = "INSERT INTO " + TABLE_FILTER + " ( " + COLUMN_FILENAME + ", " + COLUMN_SRC +
+                    ") VALUES (\"" + filename + "\", \"" + src + "\");";
+            SQLiteDatabase db = this.getWritableDatabase();
+            db.execSQL(query);
+        } catch (android.database.sqlite.SQLiteConstraintException e) {
+            Log.e("Filter table", "Filename " + filename + " already exists in table");
+        }
     }
 
 
