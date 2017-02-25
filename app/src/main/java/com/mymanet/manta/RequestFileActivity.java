@@ -658,6 +658,9 @@ public class RequestFileActivity extends AppCompatActivity {
                 RequestFileActivity.this.packet = pkt;
                 RequestFileActivity.this.toConnectDevice = node;
 
+                mBroadcastHandler
+                        .postDelayed(mServiceBroadcastingRunnable, 2000);
+
                 //TEMP -- for testing/debugging purposes
                 System.out.println("ACK: sending ack to:" + node);
                 String file = "ackSent";
@@ -669,8 +672,7 @@ public class RequestFileActivity extends AppCompatActivity {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-            }
-            else {
+            } else {
                 //ignore this
                 RequestFileActivity.this.packet = null;
             }
@@ -692,8 +694,9 @@ public class RequestFileActivity extends AppCompatActivity {
 
                 RequestFileActivity.this.packet = pkt;
                 RequestFileActivity.this.toConnectDevice = node;
-            }
-            else {
+                mBroadcastHandler
+                        .postDelayed(mServiceBroadcastingRunnable, 2000);
+            } else {
                 //ignore the acknowledgement
                 RequestFileActivity.this.packet = null;
             }
@@ -714,8 +717,9 @@ public class RequestFileActivity extends AppCompatActivity {
 
                 RequestFileActivity.this.toConnectDevice = node;
                 RequestFileActivity.this.packet = packet;
-            }
-            else {
+                mBroadcastHandler
+                        .postDelayed(mServiceBroadcastingRunnable, 2000);
+            } else {
                 //ignore if not in right state
                 RequestFileActivity.this.packet = null;
             }
