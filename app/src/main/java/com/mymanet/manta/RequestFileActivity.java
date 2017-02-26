@@ -404,7 +404,6 @@ public class RequestFileActivity extends AppCompatActivity {
 
         @Override
         protected String doInBackground(InetAddress[] params) {
-
             /* busy wait to get server hopefully running,
              * TODO: check if we can remove this and it still works */
             for (int i = 0; i < 1000; i++) {
@@ -425,6 +424,10 @@ public class RequestFileActivity extends AppCompatActivity {
             InputStream inputStream = null;
             InputStream fileInputStream = null;
             PrintWriter out = null;
+
+                            /*debugger*/
+            if (Debug.isDebuggerConnected())
+                Debug.waitForDebugger();
 
             try {
                 /** Create a client socket with the host, port and timeout information
@@ -658,8 +661,8 @@ public class RequestFileActivity extends AppCompatActivity {
                 RequestFileActivity.this.packet = pkt;
                 RequestFileActivity.this.toConnectDevice = node;
 
-                mBroadcastHandler
-                        .postDelayed(mServiceBroadcastingRunnable, 2000);
+//                mBroadcastHandler
+//                        .postDelayed(mServiceBroadcastingRunnable, 4000);
 
                 //TEMP -- for testing/debugging purposes
                 System.out.println("ACK: sending ack to:" + node);
@@ -694,8 +697,8 @@ public class RequestFileActivity extends AppCompatActivity {
 
                 RequestFileActivity.this.packet = pkt;
                 RequestFileActivity.this.toConnectDevice = node;
-                mBroadcastHandler
-                        .postDelayed(mServiceBroadcastingRunnable, 2000);
+//                mBroadcastHandler
+//                        .postDelayed(mServiceBroadcastingRunnable, 2000);
             } else {
                 //ignore the acknowledgement
                 RequestFileActivity.this.packet = null;
@@ -717,8 +720,8 @@ public class RequestFileActivity extends AppCompatActivity {
 
                 RequestFileActivity.this.toConnectDevice = node;
                 RequestFileActivity.this.packet = packet;
-                mBroadcastHandler
-                        .postDelayed(mServiceBroadcastingRunnable, 2000);
+//                mBroadcastHandler
+//                        .postDelayed(mServiceBroadcastingRunnable, 2000);
             } else {
                 //ignore if not in right state
                 RequestFileActivity.this.packet = null;
@@ -757,7 +760,9 @@ public class RequestFileActivity extends AppCompatActivity {
         protected void onPostExecute(String results) {
             disconnect();
             if(RequestFileActivity.this.packet != null) {
-                lookForPeers();
+                mBroadcastHandler
+                        .postDelayed(mServiceBroadcastingRunnable, 4000);
+                //lookForPeers();
 //              switch (RequestFileActivity.this.packet.getPacketType()) {
 //                  case REQUEST:
 //                      broadcastRequest();
