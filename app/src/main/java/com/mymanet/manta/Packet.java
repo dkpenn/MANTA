@@ -37,6 +37,15 @@ class Packet {
         return this.src;
     }
 
+    List<String> getPath() {
+        List<String> pathCopy = new ArrayList<>();
+        for(String node : path) {
+            pathCopy.add(node);
+        }
+
+        return pathCopy;
+    }
+
     String getFilename() { return this.filename; }
 
     PacketType getPacketType() {return this.type; }
@@ -100,7 +109,13 @@ class Packet {
 
     private List<String> toListOfNodes(String path) {
         path = path.replace("\n","");
-        return new ArrayList<>(Arrays.asList(path.split("\t")));
+        ArrayList<String> nodes = new ArrayList<>(Arrays.asList(path.split("\t")));
+
+        for(String node: nodes) {
+            node.trim();
+        }
+
+        return nodes;
     }
 
     String pathToString() {
