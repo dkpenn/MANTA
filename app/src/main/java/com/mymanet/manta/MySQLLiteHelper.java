@@ -289,9 +289,12 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
         String query = "SELECT * FROM " + TABLE_REQUEST + " WHERE " + COLUMN_FILENAME + "= " +
                 "\"" + filename + "\" AND " + COLUMN_STATUS + " = " + Integer.toString(status) + ";";
         SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
         Cursor cursor = db.rawQuery(query, null);
         boolean exists = cursor.moveToFirst();
         cursor.close();
+        db.endTransaction();
+        db.close();
         return exists;
     }
 
@@ -306,21 +309,30 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
         String query = "UPDATE " + TABLE_REQUEST + " SET " + COLUMN_STATUS + "= " +
                 Integer.toString(status) + " WHERE " + COLUMN_FILENAME + "= \"" + filename + "\";";
         SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
         db.execSQL(query);
+        db.endTransaction();
+        db.close();
+
     }
 
     /**
      * Record new request made
      */
     void addRequest(String filename, int status) {
+        String query = "INSERT INTO " + TABLE_REQUEST + " (" + COLUMN_FILENAME + ", " +
+                COLUMN_STATUS + ") VALUES " + "(\"" + filename + "\", " + Integer.toString(status) +
+                ");";
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
         try {
-            String query = "INSERT INTO " + TABLE_REQUEST + " (" + COLUMN_FILENAME + ", " +
-                    COLUMN_STATUS + ") VALUES " + "(\"" + filename + "\", " + Integer.toString(status) +
-                    ");";
-            SQLiteDatabase db = this.getWritableDatabase();
             db.execSQL(query);
+
         } catch (android.database.sqlite.SQLiteConstraintException e) {
             Log.e("Request table", "Filename " + filename + " already exists in table");
+        } finally {
+            db.endTransaction();
+            db.close();
         }
 
     }
@@ -332,13 +344,14 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
 
         // 1. get reference to writable DB
         SQLiteDatabase db = this.getWritableDatabase();
-
+        db.beginTransaction();
         // 2. delete
         db.delete(TABLE_REQUEST,
                 "1",
                 null);
 
         // 3. close
+        db.endTransaction();
         db.close();
 
         Log.d("deleteAllRequests", "deleted everything");
@@ -351,14 +364,21 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
      * Assume the status is 0 since this is the first time it's been seen
      */
     void addResponse(String filename, String src) {
+
+        String query = "INSERT INTO " + TABLE_RESPONSE + " (" + COLUMN_FILENAME + ", " +
+                COLUMN_STATUS + ", " + COLUMN_SRC + ") VALUES " + "(\"" + filename + "\", " +
+                Integer.toString(0) + ", \"" + src + "\");";
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
+
         try {
-            String query = "INSERT INTO " + TABLE_RESPONSE + " (" + COLUMN_FILENAME + ", " +
-                    COLUMN_STATUS + ", " + COLUMN_SRC + ") VALUES " + "(\"" + filename + "\", " +
-                    Integer.toString(0) + ", \"" + src + "\");";
-            SQLiteDatabase db = this.getWritableDatabase();
             db.execSQL(query);
         } catch (android.database.sqlite.SQLiteConstraintException e) {
             Log.e("Response table", "Filename " + filename + " already exists in table");
+        } finally {
+            db.endTransaction();
+            db.close();
+
         }
     }
 
@@ -372,7 +392,10 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
                 Integer.toString(status) + " WHERE " + COLUMN_FILENAME + "= \"" + filename + "\" " +
                 "AND " + COLUMN_SRC + "= \"" + src + "\";";
         SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
         db.execSQL(query);
+        db.endTransaction();
+        db.close();
     }
 
     boolean responseHasStatus(String filename, String src, int status) {
@@ -380,9 +403,12 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
                 "\"" + filename + COLUMN_SRC + "= " + "\"" + src +
                 "\" AND " + COLUMN_STATUS + " = " + Integer.toString(status) + ";";
         SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
         Cursor cursor = db.rawQuery(query, null);
         boolean exists = cursor.moveToFirst();
         cursor.close();
+        db.endTransaction();
+        db.close();
         return exists;
     }
 
@@ -390,9 +416,12 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
         String query = "SELECT * FROM " + TABLE_RESPONSE + " WHERE " + COLUMN_FILENAME + " =" +
                 "\"" + filename + "\" AND " + COLUMN_SRC + " =" + "\"" + src + "\";";
         SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
         Cursor cursor = db.rawQuery(query, null);
         boolean exists = cursor.moveToFirst();
         cursor.close();
+        db.endTransaction();
+        db.close();
         return exists;
     }
 
@@ -403,13 +432,14 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
 
         // 1. get reference to writable DB
         SQLiteDatabase db = this.getWritableDatabase();
-
+        db.beginTransaction();
         // 2. delete
         db.delete(TABLE_RESPONSE,
                 "1",
                 null);
 
         // 3. close
+        db.endTransaction();
         db.close();
 
         Log.d("deleteAllResponses", "deleted everything");
@@ -426,20 +456,26 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
         String query = "SELECT * FROM " + TABLE_FILTER + " WHERE " + COLUMN_FILENAME + "= " +
                 "\"" + filename + "\" AND " + COLUMN_SRC + "= \"" + src + "\";";
         SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
         Cursor cursor = db.rawQuery(query, null);
         boolean exists = cursor.moveToFirst();
         cursor.close();
+        db.endTransaction();
+        db.close();
         return exists;
     }
 
     void addFilterRequest(String filename, String src) {
+        String query = "INSERT INTO " + TABLE_FILTER + " ( " + COLUMN_FILENAME + ", " + COLUMN_SRC +
+                ") VALUES (\"" + filename + "\", \"" + src + "\");";
+        SQLiteDatabase db = this.getWritableDatabase();
         try {
-            String query = "INSERT INTO " + TABLE_FILTER + " ( " + COLUMN_FILENAME + ", " + COLUMN_SRC +
-                    ") VALUES (\"" + filename + "\", \"" + src + "\");";
-            SQLiteDatabase db = this.getWritableDatabase();
             db.execSQL(query);
         } catch (android.database.sqlite.SQLiteConstraintException e) {
             Log.e("Filter table", "Filename " + filename + " already exists in table");
+        } finally {
+            db.endTransaction();
+            db.close();
         }
     }
 
@@ -451,13 +487,14 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
 
         // 1. get reference to writable DB
         SQLiteDatabase db = this.getWritableDatabase();
-
+        db.beginTransaction();
         // 2. delete
         db.delete(TABLE_FILTER,
                 "1",
                 null);
 
         // 3. close
+        db.endTransaction();
         db.close();
 
         Log.d("deleteAllFilterRequests", "deleted everything");
@@ -474,9 +511,12 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
         String query = "SELECT * FROM " + TABLE_TRUSTED + " WHERE " + COLUMN_DEVICE + "= " +
                 "\"" + device + "\";";
         SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
         Cursor cursor = db.rawQuery(query, null);
         boolean exists = cursor.moveToFirst();
         cursor.close();
+        db.endTransaction();
+        db.close();
         return exists;
     }
 
@@ -484,6 +524,7 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
         List<String> devices = new ArrayList<>();
         String query = "SELECT * FROM " + TABLE_TRUSTED + ";";
         SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
         Cursor cursor = db.rawQuery(query, null);
         if (cursor.moveToFirst()) {
             do {
@@ -491,6 +532,8 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
         cursor.close();
+        db.endTransaction();
+        db.close();
         return devices;
     }
 
@@ -501,13 +544,14 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
 
         // 1. get reference to writable DB
         SQLiteDatabase db = this.getWritableDatabase();
-
+        db.beginTransaction();
         // 2. delete
         db.delete(TABLE_TRUSTED,
                 "1",
                 null);
 
         // 3. close
+        db.endTransaction();
         db.close();
 
         Log.d("deleteAllTrustedPeers", "deleted everything");
