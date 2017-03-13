@@ -11,21 +11,12 @@
     android:paddingBottom="@dimen/activity_vertical_margin"
     tools:context="com.mymanet.manta.MainActivity">
 
-    <Button
-        android:text="Share Files"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true"
-        android:id="@+id/button2"
-        android:onClick = "enterWifiP2PActivity"
-        />
 
     <Button
         android:text="My Files"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/button2"
+        android:layout_above="@+id/button8"
         android:layout_centerHorizontal="true"
         android:id="@+id/button"
         android:onClick="myFiles" />
@@ -36,6 +27,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/button8"
         android:onClick="requestFile"
-        android:layout_below="@+id/button2"
-        android:layout_centerHorizontal="true" />
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="202dp" />
 </RelativeLayout>

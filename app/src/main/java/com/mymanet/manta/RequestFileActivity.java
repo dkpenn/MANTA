@@ -543,7 +543,6 @@ public class RequestFileActivity extends AppCompatActivity {
                             // if fileowner has been reached, send the file back
                             if (pkt.isLast(
                                     WifiDirectBroadcastReceiver.mDevice.deviceName)) {
-                                //RequestFileActivity.this.packet = pkt;
                                 sendFilePacket(pkt);
                             } else {
                                 pkt.incrPathPosition();
@@ -560,9 +559,11 @@ public class RequestFileActivity extends AppCompatActivity {
                             // otherwise continue
                                 final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
                                         filename);
+
                                 f.createNewFile();
 
                                 copyFile(inputStream, new FileOutputStream(f));
+
                             if (!WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
                                 pkt.decrPathPosition();
                                 RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
@@ -681,15 +682,7 @@ public class RequestFileActivity extends AppCompatActivity {
 
                 //TEMP -- for testing/debugging purposes
                 System.out.println("ACK: sending ack to:" + node);
-                String file = "ackSent";
-                final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-                        file);
 
-                try {
-                    f.createNewFile();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
             } else {
                 //ignore this
                 RequestFileActivity.this.packet = null;
@@ -864,7 +857,6 @@ public class RequestFileActivity extends AppCompatActivity {
                             ContentResolver cr = context.getContentResolver();
                             byte[] buf = new byte[1024];
                             int len;
-                            //OutputStream outputStream = null;
                             InputStream fileInputStream = cr.openInputStream(Uri.parse(path));
                             while ((len = fileInputStream.read(buf)) != -1) {
                                 outputStream.write(buf, 0, len);
