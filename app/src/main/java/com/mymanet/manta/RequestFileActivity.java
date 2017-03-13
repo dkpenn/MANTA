@@ -96,18 +96,18 @@ public class RequestFileActivity extends AppCompatActivity {
                 Context context = getApplicationContext();
                 CharSequence text = "Connection Successful:" + wifiP2pInfo.groupOwnerAddress + "\n";
                 int duration = Toast.LENGTH_SHORT;
-                Toast.makeText(context, text, duration).show();
+                //Toast.makeText(context, text, duration).show();
 
                 //if not group owner, start the client
                 if (!wifiP2pInfo.isGroupOwner) {
                     CharSequence text2 = "not group owner\n";
-                    Toast.makeText(context, text2, duration).show();
+                    //Toast.makeText(context, text2, duration).show();
                     startClient(wifiP2pInfo);
                 }
                 // if group owner, then start the server
                 else {
                     CharSequence text2 = "group owner\n";
-                    Toast.makeText(context, text2, duration).show();
+                    //Toast.makeText(context, text2, duration).show();
                     startServer(wifiP2pInfo);
                 }
             }
@@ -220,7 +220,7 @@ public class RequestFileActivity extends AppCompatActivity {
             Context context = getApplicationContext();
             CharSequence text = "Requested file exists on this device";
             int duration = Toast.LENGTH_SHORT;
-            Toast.makeText(context, text, duration).show();
+            //Toast.makeText(context, text, duration).show();
             // TODO move to next request
             return;
         }
@@ -266,8 +266,8 @@ public class RequestFileActivity extends AppCompatActivity {
                     CharSequence text = "Discovery succeeded";
                     int duration = Toast.LENGTH_SHORT;
 
-                    Toast toast = Toast.makeText(context, text, duration);
-                    toast.show();
+                    //Toast toast = Toast.makeText(context, text, duration);
+                    //toast.show();
                 }
 
                 @Override
@@ -275,7 +275,7 @@ public class RequestFileActivity extends AppCompatActivity {
                     Context context = getApplicationContext();
                     CharSequence text = "Discovery failed";
                     int duration = Toast.LENGTH_SHORT;
-                    Toast.makeText(context, text, duration).show();
+                    //Toast.makeText(context, text, duration).show();
                     Log.d("Discovery Failure", "reason " + i);
                 }
             });
@@ -283,7 +283,7 @@ public class RequestFileActivity extends AppCompatActivity {
             Context context = getApplicationContext();
             CharSequence text = "Packet is null; no request to process";
             int duration = Toast.LENGTH_SHORT;
-            Toast.makeText(context, text, duration).show();
+            //Toast.makeText(context, text, duration).show();
             Log.d("LookforPeers", "packet is null; no request to process");
         }
     }
@@ -333,7 +333,7 @@ public class RequestFileActivity extends AppCompatActivity {
                         Context context = getApplicationContext();
                         CharSequence text = "Connection Successful: In Progress";
                         int duration = Toast.LENGTH_SHORT;
-                        Toast.makeText(context, text, duration).show();
+                        //Toast.makeText(context, text, duration).show();
                     }
 
                     @Override
@@ -341,7 +341,7 @@ public class RequestFileActivity extends AppCompatActivity {
                         Context context = getApplicationContext();
                         CharSequence text = "Connection Failed: In Progress";
                         int duration = Toast.LENGTH_SHORT;
-                        Toast.makeText(context, text, duration).show();
+                        //Toast.makeText(context, text, duration).show();
                     }
                 });
             }
@@ -350,7 +350,7 @@ public class RequestFileActivity extends AppCompatActivity {
             Context context = getApplicationContext();
             CharSequence text = "Packet is null";
             int duration = Toast.LENGTH_SHORT;
-            Toast.makeText(context, text, duration).show();
+            //Toast.makeText(context, text, duration).show();
             Log.d("connectToSpecificDevice", "packet is null");
         }
     }
@@ -377,7 +377,7 @@ public class RequestFileActivity extends AppCompatActivity {
                                 Context context = getApplicationContext();
                                 CharSequence text = "Disconnected";
                                 int duration = Toast.LENGTH_SHORT;
-                                Toast.makeText(context, text, duration).show();
+                                //Toast.makeText(context, text, duration).show();
                             }
 
                             @Override
@@ -412,7 +412,7 @@ public class RequestFileActivity extends AppCompatActivity {
 
             System.out.println("client started");
 
-            Context context = getApplicationContext();
+            context = getApplicationContext();
 
             InetAddress groupOwnerAddress = params[0];
             int port = 8888;
@@ -456,27 +456,31 @@ public class RequestFileActivity extends AppCompatActivity {
 
                 String packetTypeString = in.readLine();
 
-                Log.v("client", packetTypeString);
+                if(packetTypeString == null) {
+                    Log.e("client", "no packet supplied");
+                }
+                else {
+                    Log.v("client", packetTypeString);
 
-                PacketType packetType = PacketType.fromInt(Integer.parseInt(packetTypeString));
+                    PacketType packetType = PacketType.fromInt(Integer.parseInt(packetTypeString));
 
-                String srcDevice = in.readLine();
-                String filename = in.readLine();
-                int ttl = Integer.parseInt(in.readLine());
-                String path = in.readLine();
-                int pathPosition = Integer.parseInt(in.readLine());
+                    String srcDevice = in.readLine();
+                    String filename = in.readLine();
+                    int ttl = Integer.parseInt(in.readLine());
+                    String path = in.readLine();
+                    int pathPosition = Integer.parseInt(in.readLine());
 
-                Packet pkt = new Packet(filename, ttl, srcDevice, packetType, path, pathPosition);
+                    Packet pkt = new Packet(filename, ttl, srcDevice, packetType, path, pathPosition);
 
-                System.out.println("got packet");
+                    System.out.println("got packet");
 
-                switch (packetType) {
-                    case REQUEST:
+                    switch (packetType) {
+                        case REQUEST:
 
-                        System.out.println("request packet for: " + filename + " from: " + srcDevice);
-                        progress = "received packet";
+                            System.out.println("request packet for: " + filename + " from: " + srcDevice);
+                            progress = "received packet";
 
-                        // if request has been seen before, ignore it, otherwise record it
+                            // if request has been seen before, ignore it, otherwise record it
 //                        final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
 //
 //                        if (db.requestSeen(filename, srcDevice)) {
@@ -487,87 +491,98 @@ public class RequestFileActivity extends AppCompatActivity {
 //                            db.addFilterRequest(filename, srcDevice);
 //                        }
 
-                        //This packet will be processed
-                        //RequestFileActivity.this.packet = pkt;
-                        String deviceName = WifiDirectBroadcastReceiver.mDevice.deviceName;
-                        //Add self to packet path
-
-                        //RequestFileActivity.this.packet.addToPath(deviceName);
-
-                        pkt.addToPath(deviceName);
-                        // if the request has reached a fileowner, unicast this back along the path
-                        // otherwise, broadcast request to other peers
-                        if (containsFile(filename)) {
-
-                            System.out.println("to connect device: " +
-                                    RequestFileActivity.this.toConnectDevice + "\nsrc: " + srcDevice);
-
-                            System.out.println("found file: " +
-                                    filename);
-                            //change packet to ACK
-                            sendAck(pkt);
-                        } else {
-                            progress = "to broadcast packet";
-                            broadcastRequest(pkt);
-                        }
-
-                        break;
-                    case ACK:
-
-                        System.out.println("ack packet for: " + filename + " from: " + srcDevice);
-                        progress = "received packet";
-
-                        // if the ack has reached the requester, send a request for the file itself
-                        // otherwise continue
-                        if (WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
+                            //This packet will be processed
                             //RequestFileActivity.this.packet = pkt;
-                            sendSend(pkt);
-                        } else {
-                            pkt.decrPathPosition();
-                            RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
-                            RequestFileActivity.this.packet = pkt;
-                        }
+                            String deviceName = WifiDirectBroadcastReceiver.mDevice.deviceName;
+                            //Add self to packet path
 
-                        System.out.println("ack sending to " + RequestFileActivity.this.toConnectDevice);
+                            //RequestFileActivity.this.packet.addToPath(deviceName);
 
-                        break;
-                    case SEND:
+                            pkt.addToPath(deviceName);
+                            // if the request has reached a fileowner, unicast this back along the path
+                            // otherwise, broadcast request to other peers
+                            if (containsFile(filename)) {
+                                progress = "send ack pack";
+                                System.out.println("to connect device: " +
+                                        RequestFileActivity.this.toConnectDevice + "\nsrc: " + srcDevice);
 
-                        System.out.println("send packet for: " + filename + " from: " + srcDevice);
-                        progress = "received packet";
+                                System.out.println("found file: " +
+                                        filename);
+                                //change packet to ACK
+                                sendAck(pkt);
+                            } else {
+                                progress = "to broadcast packet";
+                                broadcastRequest(pkt);
+                            }
 
-                        // if fileowner has been reached, send the file back
-                        if (pkt.isLast(
-                                WifiDirectBroadcastReceiver.mDevice.deviceName)) {
-                            //RequestFileActivity.this.packet = pkt;
-                            sendFilePacket(pkt);
-                        } else {
-                            pkt.incrPathPosition();
-                            RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
-                            RequestFileActivity.this.packet = pkt;
-                        }
-                        break;
-                    case FILE:
+                            break;
+                        case ACK:
 
-                        System.out.println("file packet for: " + filename + " from: " + srcDevice);
-                        progress = "received packet";
+                            System.out.println("ack packet for: " + filename + " from: " + srcDevice);
+                            progress = "received packet";
 
-                        // if requester has been reached, stop because transaction is complete
-                        // otherwise continue
-                        if (WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
-                            final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-                                    filename);
-                            f.createNewFile();
+                            // if the ack has reached the requester, send a request for the file itself
+                            // otherwise continue
+                            if (WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
+                                //RequestFileActivity.this.packet = pkt;
+                                sendSend(pkt);
+                            } else {
+                                pkt.decrPathPosition();
+                                RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
+                                RequestFileActivity.this.packet = pkt;
+                            }
 
-                            copyFile(inputStream, new FileOutputStream(f));
-                        } else {
-                            pkt.decrPathPosition();
-                            RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
-                            RequestFileActivity.this.packet = pkt;
-                        }
-                        break;
-                    default:
-                        break;
+                            System.out.println("ack sending to " + RequestFileActivity.this.toConnectDevice);
+
+                            break;
+                        case SEND:
+
+                            System.out.println("send packet for: " + filename + " from: " + srcDevice);
+                            progress = "received packet";
+
+                            // if fileowner has been reached, send the file back
+                            if (pkt.isLast(
+                                    WifiDirectBroadcastReceiver.mDevice.deviceName)) {
+                                //RequestFileActivity.this.packet = pkt;
+                                sendFilePacket(pkt);
+                            } else {
+                                pkt.incrPathPosition();
+                                RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
+                                RequestFileActivity.this.packet = pkt;
+                            }
+                            break;
+                        case FILE:
+
+                            System.out.println("file packet for: " + filename + " from: " + srcDevice);
+                            progress = "received packet";
+
+                            // if requester has been reached, stop because transaction is complete
+                            // otherwise continue
+                                final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+                                        filename);
+                                f.createNewFile();
+
+                                copyFile(inputStream, new FileOutputStream(f));
+                            if (!WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
+                                pkt.decrPathPosition();
+                                RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
+                                RequestFileActivity.this.packet = pkt;
+                            }
+//                            if (WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
+//                                final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+//                                        filename);
+//                                f.createNewFile();
+//
+//                                copyFile(inputStream, new FileOutputStream(f));
+//                            } else {
+//                                pkt.decrPathPosition();
+//                                RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
+//                                RequestFileActivity.this.packet = pkt;
+//                            }
+                            break;
+                        default:
+                            break;
+                    }
                 }
 
             } catch (FileNotFoundException e) {
@@ -719,7 +734,7 @@ public class RequestFileActivity extends AppCompatActivity {
                 String node = pkt.getNodeAtPathPosition();
 
                 RequestFileActivity.this.toConnectDevice = node;
-                RequestFileActivity.this.packet = packet;
+                RequestFileActivity.this.packet = pkt;
 //                mBroadcastHandler
 //                        .postDelayed(mServiceBroadcastingRunnable, 2000);
             } else {
@@ -753,7 +768,7 @@ public class RequestFileActivity extends AppCompatActivity {
             Context context = getApplicationContext();
             CharSequence text = "Sending...";
             int duration = Toast.LENGTH_SHORT;
-            Toast.makeText(context, text, duration).show();
+            //Toast.makeText(context, text, duration).show();
         }
 
         @Override
@@ -774,7 +789,7 @@ public class RequestFileActivity extends AppCompatActivity {
             else {
                 Context context = getApplicationContext();
                 int duration = Toast.LENGTH_SHORT;
-                Toast.makeText(context, progress, duration).show();
+                //Toast.makeText(context, progress, duration).show();
                 Intent intent = new Intent(context, MainActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(intent);
@@ -799,65 +814,68 @@ public class RequestFileActivity extends AppCompatActivity {
             if(RequestFileActivity.this.packet == null) {
                 Log.d("ServerAsyncTask", "no packet is supplied");
             }
+            else {
+                System.out.println("server started");
+                context = getApplicationContext();
 
-            System.out.println("server started");
-
-            /** Create a server socket and wait for client connections. This
-             * call blocks until a connection is accepted from a client
-             */
-
-            PrintWriter out = null;
-            ServerSocket serverSocket = null;
-            Socket client = null;
-            InputStream inputStream = null;
-
-            try {
-
-                serverSocket = new ServerSocket(8888);
-
-                client = serverSocket.accept();
-
-                if (Debug.isDebuggerConnected())
-                    Debug.waitForDebugger();
-
-                inputStream = client.getInputStream();
-                out = new PrintWriter(client.getOutputStream(), true);
-
-                if (packet == null) {
-                    Log.e("Server", "packet is null");
-                    throw new NoPacketException();
-                }
-
-                // send packet data to connected device
-                switch (packet.getPacketType()) {
-                    case REQUEST:
-                        packet.packetToStream(out, "1");
-                        break;
-                    case ACK:
-                        packet.packetToStream(out, "2");
-                        break;
-                    case SEND:
-                        packet.packetToStream(out, "3");
-                        break;
-                    case FILE:
-                        out.println("4");
-                        File picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-                        String path = "file:////"+ picturesDir.getAbsolutePath() + "/"+ packet.getFilename();
-                        ContentResolver cr = context.getContentResolver();
-                        byte[] buf = new byte[1024];
-                        int len;
-                        OutputStream outputStream = null;
-                        InputStream fileInputStream = cr.openInputStream(Uri.parse(path));
-                        while((len = fileInputStream.read(buf)) != -1) {
-                            outputStream.write(buf, 0, len);
-                        }
-                    default:
-                        break;
-                }
-
-                /**
-                 *  If this code is reached, a client has connected and transferred data
+                /** Create a server socket and wait for client connections. This
+                 * call blocks until a connection is accepted from a client
                  */
+
+                PrintWriter out = null;
+                ServerSocket serverSocket = null;
+                Socket client = null;
+                InputStream inputStream = null;
+                OutputStream outputStream = null;
+
+                try {
+
+                    serverSocket = new ServerSocket(8888);
+
+                    client = serverSocket.accept();
+
+                    if (Debug.isDebuggerConnected())
+                        Debug.waitForDebugger();
+
+                    inputStream = client.getInputStream();
+                    outputStream = client.getOutputStream();
+                    out = new PrintWriter(outputStream, true);
+
+                    if (packet == null) {
+                        Log.e("Server", "packet is null");
+                        throw new NoPacketException();
+                    }
+
+                    // send packet data to connected device
+                    switch (packet.getPacketType()) {
+                        case REQUEST:
+                            packet.packetToStream(out, "1");
+                            break;
+                        case ACK:
+                            packet.packetToStream(out, "2");
+                            break;
+                        case SEND:
+                            packet.packetToStream(out, "3");
+                            break;
+                        case FILE:
+                            packet.packetToStream(out, "4");
+                            File picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+                            String path = "file:////" + picturesDir.getAbsolutePath() + "/" + packet.getFilename();
+                            ContentResolver cr = context.getContentResolver();
+                            byte[] buf = new byte[1024];
+                            int len;
+                            //OutputStream outputStream = null;
+                            InputStream fileInputStream = cr.openInputStream(Uri.parse(path));
+                            while ((len = fileInputStream.read(buf)) != -1) {
+                                outputStream.write(buf, 0, len);
+                            }
+                        default:
+                            break;
+                    }
+
+                    /**
+                     *  If this code is reached, a client has connected and transferred data
+                     */
 
 //                InputStream inputStream = client.getInputStream();
 //                String filename = inputStream.toString();
@@ -872,45 +890,48 @@ public class RequestFileActivity extends AppCompatActivity {
 //                boolean returned = returnFile(filename);
 
                 /* ONLY FOR DEMO PURPOSES (ALSO ASSUMING ONLY SEND TO ONE PEER) */
-                RequestFileActivity.this.packet = null;
+                    RequestFileActivity.this.packet = null;
 
-            } catch (NoPacketException e) {
-                Log.e("Request File", e.getMessage());
-            } catch (IOException e) {
-                Log.e("Request File", e.getMessage());
-            } finally {
-                if (client != null) {
-                    try {
-                        client.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                } catch (NoPacketException e) {
+                    Log.e("Request File", e.getMessage());
+                } catch (IOException e) {
+                    Log.e("Request File", e.getMessage());
+                } finally {
+                    RequestFileActivity.this.packet = null;
+
+                    if (client != null) {
+                        try {
+                            client.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
-                }
 
-                if (serverSocket != null) {
-                    try {
-                        serverSocket.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    if (serverSocket != null) {
+                        try {
+                            serverSocket.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
-                }
 
-                if (out != null) {
-                    out.close();
-                }
+                    if (out != null) {
+                        out.close();
+                    }
                 /* Stop Peer discovery if it is still going */
-                mManager.stopPeerDiscovery(mChannel, new WifiP2pManager.ActionListener() {
-                    @Override
-                    public void onSuccess() {
-                        Log.d("wifi p2p", "stop peer discovery");
-                    }
+                    mManager.stopPeerDiscovery(mChannel, new WifiP2pManager.ActionListener() {
+                        @Override
+                        public void onSuccess() {
+                            Log.d("wifi p2p", "stop peer discovery");
+                        }
 
-                    @Override
-                    public void onFailure(int i) {
-                        Log.d("wifi p2p", "not stop peer discovery");
-                    }
-                });
-                disconnect();
+                        @Override
+                        public void onFailure(int i) {
+                            Log.d("wifi p2p", "not stop peer discovery");
+                        }
+                    });
+                    disconnect();
+                }
             }
             return null;
         }
@@ -949,7 +970,7 @@ public class RequestFileActivity extends AppCompatActivity {
             Context context = getApplicationContext();
             CharSequence text = "Sending...";
             int duration = Toast.LENGTH_SHORT;
-            Toast.makeText(context, text, duration).show();
+            //Toast.makeText(context, text, duration).show();
         }
 
         @Override
@@ -958,7 +979,7 @@ public class RequestFileActivity extends AppCompatActivity {
             Context context = getApplicationContext();
             CharSequence text = "Sent";
             int duration = Toast.LENGTH_SHORT;
-            Toast.makeText(context, text, duration).show();
+            //Toast.makeText(context, text, duration).show();
             Intent intent = new Intent(context, MainActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(intent);
