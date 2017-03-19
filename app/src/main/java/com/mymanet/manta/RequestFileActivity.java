@@ -26,6 +26,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -448,13 +449,19 @@ public class RequestFileActivity extends AppCompatActivity {
                 outputStream = socket.getOutputStream();
                 inputStream = socket.getInputStream();
 
-                BufferedReader in = new BufferedReader(
-                        new InputStreamReader(inputStream)
-                );
+                DataInputStream dis = new DataInputStream(inputStream);
+
 
                 /** Read information sent by server about packet */
 
-                String packetTypeString = in.readLine();
+                String packetTypeString = null;
+                String srcDevice = null;
+                String filename = null;
+                int ttl = 0;
+                String path = null;
+                int pathPosition = 0;
+
+                packetTypeString = nextToken(dis);
 
                 if(packetTypeString == null) {
                     Log.e("client", "no packet supplied");
@@ -464,11 +471,11 @@ public class RequestFileActivity extends AppCompatActivity {
 
                     PacketType packetType = PacketType.fromInt(Integer.parseInt(packetTypeString));
 
-                    String srcDevice = in.readLine();
-                    String filename = in.readLine();
-                    int ttl = Integer.parseInt(in.readLine());
-                    String path = in.readLine();
-                    int pathPosition = Integer.parseInt(in.readLine());
+                    srcDevice = nextToken(dis);
+                    filename = nextToken(dis);
+                    ttl = Integer.parseInt(nextToken(dis));
+                    path = nextToken(dis);
+                    pathPosition = Integer.parseInt(nextToken(dis));
 
                     Packet pkt = new Packet(filename, ttl, srcDevice, packetType, path, pathPosition);
 
@@ -621,6 +628,17 @@ public class RequestFileActivity extends AppCompatActivity {
             return null;
         }
 
+        String nextToken(DataInputStream dis) throws IOException {
+            char c;
+            int i = 0;
+            char[] next = new char[1024];
+            while ((c = dis.readChar()) != '\n') {
+                next[i] = c;
+                i++;
+            }
+            return new String(next);
+        }
+
         /**
          * broadcast a request to friends if not already sent
          */
@@ -769,7 +787,7 @@ public class RequestFileActivity extends AppCompatActivity {
             disconnect();
             if(RequestFileActivity.this.packet != null) {
                 mBroadcastHandler
-                        .postDelayed(mServiceBroadcastingRunnable, 4000);
+                        .postDelayed(mServiceBroadcastingRunnable, 2000);
                 //lookForPeers();
 //              switch (RequestFileActivity.this.packet.getPacketType()) {
 //                  case REQUEST:
@@ -818,7 +836,6 @@ public class RequestFileActivity extends AppCompatActivity {
                 PrintWriter out = null;
                 ServerSocket serverSocket = null;
                 Socket client = null;
-                InputStream inputStream = null;
                 OutputStream outputStream = null;
 
                 try {
@@ -830,7 +847,6 @@ public class RequestFileActivity extends AppCompatActivity {
                     if (Debug.isDebuggerConnected())
                         Debug.waitForDebugger();
 
-                    inputStream = client.getInputStream();
                     outputStream = client.getOutputStream();
                     out = new PrintWriter(outputStream, true);
 
