@@ -215,6 +215,7 @@ public class RequestFileActivity extends AppCompatActivity {
      */
     public void requestByFilename(View view) {
         String filename = mEdit.getText().toString();
+        System.out.println("filename user entered!: " + filename);
 
         // if file exists locally, terminate request
         if (containsFile(filename)) {
