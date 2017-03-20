@@ -839,9 +839,12 @@ public class RequestFileActivity extends AppCompatActivity {
                 OutputStream outputStream = null;
 
                 try {
+                    if (packet == null) {
+                        Log.e("Server", "packet is null");
+                        throw new NoPacketException();
+                    }
 
                     serverSocket = new ServerSocket(8888);
-
                     client = serverSocket.accept();
 
                     if (Debug.isDebuggerConnected())
@@ -849,11 +852,6 @@ public class RequestFileActivity extends AppCompatActivity {
 
                     outputStream = client.getOutputStream();
                     out = new PrintWriter(outputStream, true);
-
-                    if (packet == null) {
-                        Log.e("Server", "packet is null");
-                        throw new NoPacketException();
-                    }
 
                     // send packet data to connected device
                     switch (packet.getPacketType()) {
