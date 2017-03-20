@@ -438,7 +438,7 @@ public class RequestFileActivity extends AppCompatActivity {
                 socket.bind(null);
 
                 /*changed timeout to 5500ms so connection has time to happen */
-                socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 5500);
+                socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 15000);
 
                 /*debugger*/
                 if (Debug.isDebuggerConnected())
@@ -626,6 +626,7 @@ public class RequestFileActivity extends AppCompatActivity {
             return null;
         }
 
+        /* http://stackoverflow.com/questions/8488433/reading-lines-from-an-inputstream-without-buffering */
         String nextToken(InputStream is) throws IOException {
             int c;
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
