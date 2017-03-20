@@ -54,8 +54,6 @@ public class RequestFileActivity extends AppCompatActivity {
     IntentFilter mIntentFilter;
     String toConnectDevice;
     Packet packet;
-//    List<Packet> packets; // packets that need to be processed
-
     Handler mBroadcastHandler;
 
     @Override
@@ -451,7 +449,7 @@ public class RequestFileActivity extends AppCompatActivity {
                 outputStream = socket.getOutputStream();
                 inputStream = socket.getInputStream();
 
-                DataInputStream dis = new DataInputStream(inputStream);
+                InputStreamReader is = new InputStreamReader(inputStream, "US-ASCII");
 
 
                 /** Read information sent by server about packet */
@@ -463,7 +461,7 @@ public class RequestFileActivity extends AppCompatActivity {
                 String path = null;
                 int pathPosition = 0;
 
-                packetTypeString = nextToken(dis);
+                packetTypeString = nextToken(is);
 
                 if(packetTypeString == null) {
                     Log.e("client", "no packet supplied");
@@ -473,11 +471,11 @@ public class RequestFileActivity extends AppCompatActivity {
 
                     PacketType packetType = PacketType.fromInt(Integer.parseInt(packetTypeString));
 
-                    srcDevice = nextToken(dis);
-                    filename = nextToken(dis);
-                    ttl = Integer.parseInt(nextToken(dis));
-                    path = nextToken(dis);
-                    pathPosition = Integer.parseInt(nextToken(dis));
+                    srcDevice = nextToken(is);
+                    filename = nextToken(is);
+                    ttl = Integer.parseInt(nextToken(is));
+                    path = nextToken(is);
+                    pathPosition = Integer.parseInt(nextToken(is));
 
                     Packet pkt = new Packet(filename, ttl, srcDevice, packetType, path, pathPosition);
 
@@ -630,15 +628,16 @@ public class RequestFileActivity extends AppCompatActivity {
             return null;
         }
 
-        String nextToken(DataInputStream dis) throws IOException {
-            char c;
+        String nextToken(InputStreamReader is) throws IOException {
+            char c = (char)is.read();
             int i = 0;
-            char[] next = new char[1024];
-            while ((c = dis.readChar()) != '\n') {
-                next[i] = c;
+            StringBuffer sb = new StringBuffer();
+            while (c != '\n') {
+                sb.append(c);
+                c = (char)is.read();
                 i++;
             }
-            return new String(next);
+            return sb.toString();
         }
 
         /**
