@@ -26,6 +26,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -449,9 +450,6 @@ public class RequestFileActivity extends AppCompatActivity {
                 outputStream = socket.getOutputStream();
                 inputStream = socket.getInputStream();
 
-                InputStreamReader is = new InputStreamReader(inputStream, "US-ASCII");
-
-
                 /** Read information sent by server about packet */
 
                 String packetTypeString = null;
@@ -461,7 +459,7 @@ public class RequestFileActivity extends AppCompatActivity {
                 String path = null;
                 int pathPosition = 0;
 
-                packetTypeString = nextToken(is);
+                packetTypeString = nextToken(inputStream);
 
                 if(packetTypeString == null) {
                     Log.e("client", "no packet supplied");
@@ -471,11 +469,11 @@ public class RequestFileActivity extends AppCompatActivity {
 
                     PacketType packetType = PacketType.fromInt(Integer.parseInt(packetTypeString));
 
-                    srcDevice = nextToken(is);
-                    filename = nextToken(is);
-                    ttl = Integer.parseInt(nextToken(is));
-                    path = nextToken(is);
-                    pathPosition = Integer.parseInt(nextToken(is));
+                    srcDevice = nextToken(inputStream);
+                    filename = nextToken(inputStream);
+                    ttl = Integer.parseInt(nextToken(inputStream));
+                    path = nextToken(inputStream);
+                    pathPosition = Integer.parseInt(nextToken(inputStream));
 
                     Packet pkt = new Packet(filename, ttl, srcDevice, packetType, path, pathPosition);
 
@@ -628,16 +626,17 @@ public class RequestFileActivity extends AppCompatActivity {
             return null;
         }
 
-        String nextToken(InputStreamReader is) throws IOException {
-            char c = (char)is.read();
-            int i = 0;
-            StringBuffer sb = new StringBuffer();
-            while (c != '\n') {
-                sb.append(c);
-                c = (char)is.read();
-                i++;
+        String nextToken(InputStream is) throws IOException {
+            int c;
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            for (c = is.read(); c != '\n' && c != -1; c = is.read()) {
+                byteArrayOutputStream.write(c);
             }
-            return sb.toString();
+            if (c == -1 && byteArrayOutputStream.size() == 0) {
+                return null;
+            }
+            String line = byteArrayOutputStream.toString("UTF-8");
+            return line;
         }
 
         /**
