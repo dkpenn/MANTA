@@ -21,6 +21,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
+import android.webkit.MimeTypeMap;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -213,9 +214,9 @@ public class RequestFileActivity extends AppCompatActivity {
      * @param view
      */
     public void requestByFilename(View view) {
-//        String filename = mEdit.getText().toString();
+        String filename = mEdit.getText().toString();
         // TODO remove this line
-        String filename = "hello.jpg";
+        //String filename = "hello.jpg";
 
         // if file exists locally, terminate request
         if (containsFile(filename)) {
@@ -426,6 +427,7 @@ public class RequestFileActivity extends AppCompatActivity {
             InputStream inputStream = null;
             InputStream fileInputStream = null;
             PrintWriter out = null;
+            String file = null;
 
                             /*debugger*/
             if (Debug.isDebuggerConnected())
@@ -573,6 +575,10 @@ public class RequestFileActivity extends AppCompatActivity {
                                 pkt.decrPathPosition();
                                 RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
                                 RequestFileActivity.this.packet = pkt;
+
+                            }
+                            else {
+                                file = filename;
                             }
 //                            if (WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
 //                                final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
@@ -623,7 +629,7 @@ public class RequestFileActivity extends AppCompatActivity {
 
             }
 
-            return null;
+            return file;
         }
 
         /* http://stackoverflow.com/questions/8488433/reading-lines-from-an-inputstream-without-buffering */
@@ -797,6 +803,22 @@ public class RequestFileActivity extends AppCompatActivity {
 //                  default:
 //                      break;
 //              }
+            }
+            else if (results != null) {
+                Context context = getApplicationContext();
+                Intent intent = new Intent();
+                intent.setAction(Intent.ACTION_VIEW);
+                //https://stackoverflow.com/questions/12585747/how-to-open-a-file-in-android-via-an-intent#12585945
+                String ext = results.substring(results.indexOf('.')+1);
+                String mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
+                System.out.println("extention : " + ext + "mime " + mime);
+                intent.setAction(android.content.Intent.ACTION_VIEW);
+                File picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+                String path = "file://" + picturesDir.getAbsolutePath() + "/" + results;
+                intent.setDataAndType(Uri.parse(path), mime);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
+
             }
             else {
                 Context context = getApplicationContext();
