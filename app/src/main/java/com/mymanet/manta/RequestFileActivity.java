@@ -209,6 +209,25 @@ public class RequestFileActivity extends AppCompatActivity {
     }
 
     /**
+     * Begins process of scanning for peers
+     * @param view
+     */
+    public void scanForPeers(View view) {
+        mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
+
+            @Override
+            public void onSuccess() {
+                Log.d("Discovery Succeeded", "scan for peers button");
+            }
+
+            @Override
+            public void onFailure(int i) {
+                Log.d("Discovery Failure", "reason " + i);
+            }
+        });
+    }
+
+    /**
      * When user clicks to request a file, broadcast request for file to
      * neighbors
      * @param view

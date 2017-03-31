@@ -10,41 +10,62 @@
         android:inputType="textPersonName"
         android:hint="Enter Filename"
         android:ems="10"
+        android:id="@+id/requested_file"
+        android:layout_marginTop="44dp"
         android:layout_below="@+id/textView4"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="85dp"
-        android:id="@+id/requested_file" />
+        android:layout_centerHorizontal="true" />
 
     <Button
         android:text="@string/request"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true"
         android:id="@+id/button6"
         android:textColor="@android:color/background_light"
         android:background="@android:color/holo_blue_dark"
-        android:onClick="requestByFilename" />
+        android:onClick="requestByFilename"
+        android:layout_marginTop="18dp"
+        android:layout_below="@+id/requested_file"
+        android:layout_centerHorizontal="true" />
 
     <TextView
         android:text="@string/request_a_file"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="47dp"
+        android:layout_marginTop="22dp"
         android:id="@+id/textView4"
         android:textSize="24sp"
         android:textStyle="normal|bold"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true" />
 
+    <ProgressBar
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/button11"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="144dp"
+        android:id="@+id/progressBar5" />
+
+    <Button
+        android:text="Scan for Peers"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/button10"
+        android:onClick="scanForPeers"
+        android:layout_below="@+id/progressBar5"
+        android:layout_toRightOf="@+id/button6"
+        android:layout_toEndOf="@+id/button6" />
+
     <Button
         android:text="Delete Temp Data"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
-        android:id="@+id/button10"
-        android:layout_below="@+id/button6"
-        android:layout_alignRight="@+id/textView4"
-        android:layout_alignEnd="@+id/textView4"
-        android:onClick="deleteTempData" />
+        android:id="@+id/button11"
+        android:onClick="deleteTempData"
+        android:layout_marginBottom="20dp"
+        android:layout_alignParentBottom="true"
+        android:layout_toLeftOf="@+id/progressBar5"
+        android:layout_toStartOf="@+id/progressBar5" />
+
 </RelativeLayout>
