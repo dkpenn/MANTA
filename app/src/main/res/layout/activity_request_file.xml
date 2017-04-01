@@ -68,4 +68,13 @@
         android:layout_toLeftOf="@+id/progressBar5"
         android:layout_toStartOf="@+id/progressBar5" />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/status"
+        android:layout_marginTop="64dp"
+        android:layout_alignTop="@+id/progressBar5"
+        android:layout_alignLeft="@+id/progressBar5"
+        android:layout_alignStart="@+id/progressBar5" />
+
 </RelativeLayout>

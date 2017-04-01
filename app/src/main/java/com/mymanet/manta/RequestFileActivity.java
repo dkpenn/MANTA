@@ -23,6 +23,7 @@ import android.util.Log;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -57,6 +58,10 @@ public class RequestFileActivity extends AppCompatActivity {
     String toConnectDevice;
     Packet packet;
     Handler mBroadcastHandler;
+    private ProgressBar mProgress;
+    private TextView mStatus;
+    int progressDiff;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +70,14 @@ public class RequestFileActivity extends AppCompatActivity {
         setContentView(R.layout.activity_request_file);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        mProgress = (ProgressBar) findViewById(R.id.progressBar5);
+        mProgress.setProgress(0);
+        mProgress.setVisibility(View.GONE);
+        progressDiff = mProgress.getMax() / 2;
+
+        mStatus = (TextView) findViewById(R.id.status);
+        mStatus.setVisibility(View.GONE);
 
         packet = null;
 
@@ -234,8 +247,8 @@ public class RequestFileActivity extends AppCompatActivity {
      */
     public void requestByFilename(View view) {
         String filename = mEdit.getText().toString();
-        // TODO remove this line
-        //String filename = "hello.jpg";
+        mProgress.setVisibility(View.VISIBLE);
+        mStatus.setVisibility(View.VISIBLE);
 
         // if file exists locally, terminate request
         if (containsFile(filename)) {
@@ -274,6 +287,15 @@ public class RequestFileActivity extends AppCompatActivity {
         MySQLLiteHelper db = MySQLLiteHelper.getHelper(this);
         return db.containsFile(filename);
     }
+
+    public void updateProgress() {
+        mProgress.incrementProgressBy(progressDiff);
+    }
+
+    public void updateStatus(String status) {
+        mStatus.setText(status);
+    }
+
 
     /**
      * start peer discovery if there is a packet to process
@@ -550,7 +572,7 @@ public class RequestFileActivity extends AppCompatActivity {
                             // if the ack has reached the requester, send a request for the file itself
                             // otherwise continue
                             if (WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
-                                //RequestFileActivity.this.packet = pkt;
+                                RequestFileActivity.this.updateProgress();
                                 sendSend(pkt);
                             } else {
                                 pkt.decrPathPosition();
@@ -594,7 +616,7 @@ public class RequestFileActivity extends AppCompatActivity {
                                 pkt.decrPathPosition();
                                 RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
                                 RequestFileActivity.this.packet = pkt;
-
+                                RequestFileActivity.this.updateProgress();
                             }
                             else {
                                 file = filename;
