@@ -83,14 +83,14 @@ public class RequestFileActivity extends AppCompatActivity {
 //        mProgress.setVisibility(View.GONE);
         Bundle extras = getIntent().getExtras();
         if (savedInstanceState == null) {
-            if (extras != null) {
-                progress = extras.getInt("progress");
-                statusText = extras.getString("status");
-            } else {
+//            if (extras != null) {
+//                progress = extras.getInt("progress");
+//                statusText = extras.getString("status");
+//            } else {
                 progress = 0;
                 statusText = null;
-            }
-        } else if (extras != null) {
+//            }
+        } else {
             progress = savedInstanceState.getInt("progress");
             statusText = savedInstanceState.getString("status");
         }
@@ -205,11 +205,11 @@ public class RequestFileActivity extends AppCompatActivity {
 
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
-        super.onSaveInstanceState(savedInstanceState);
         getIntent().putExtra("progress", progress);
         getIntent().putExtra("status", String.valueOf(statusText));
         savedInstanceState.putInt("progress", progress);
         savedInstanceState.putString("status", String.valueOf(statusText));
+        super.onSaveInstanceState(savedInstanceState);
     }
 
     @Override
