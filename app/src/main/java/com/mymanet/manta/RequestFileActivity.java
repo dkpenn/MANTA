@@ -43,6 +43,8 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class RequestFileActivity extends AppCompatActivity {
 
@@ -58,12 +60,13 @@ public class RequestFileActivity extends AppCompatActivity {
     String toConnectDevice;
     Packet packet;
     Handler mBroadcastHandler;
+    Timer timer;
 
-    boolean progressIncreased;
+    int progress;
     private ProgressBar mProgress;
     int progressDiff;
 
-    String newStatus;
+    String statusText;
     private TextView mStatus;
 
 
@@ -78,12 +81,29 @@ public class RequestFileActivity extends AppCompatActivity {
         mProgress = (ProgressBar) findViewById(R.id.progressBar5);
         mProgress.setProgress(0);
 //        mProgress.setVisibility(View.GONE);
-        progressIncreased = false;
+        Bundle extras = getIntent().getExtras();
+        if (savedInstanceState == null) {
+            if (extras != null) {
+                progress = extras.getInt("progress");
+                statusText = extras.getString("status");
+            } else {
+                progress = 0;
+                statusText = null;
+            }
+        } else if (extras != null) {
+            progress = savedInstanceState.getInt("progress");
+            statusText = savedInstanceState.getString("status");
+        }
         progressDiff = mProgress.getMax() / 2;
 
         mStatus = (TextView) findViewById(R.id.status);
 //        mStatus.setVisibility(View.GONE);
-        newStatus = null;
+
+        updateUI();
+
+        // update UI every 10 seconds
+//        timer = new Timer();
+//        timer.schedule(new updateUI(), 10000);
 
         packet = null;
 
@@ -113,26 +133,18 @@ public class RequestFileActivity extends AppCompatActivity {
             @Override
             public void onConnectionInfoAvailable(WifiP2pInfo wifiP2pInfo) {
 
-                Context context = getApplicationContext();
-                CharSequence text = "Connection Successful:" + wifiP2pInfo.groupOwnerAddress + "\n";
-                int duration = Toast.LENGTH_SHORT;
-                //Toast.makeText(context, text, duration).show();
-
                 //if not group owner, start the client
                 if (!wifiP2pInfo.isGroupOwner) {
-                    CharSequence text2 = "not group owner\n";
-                    //Toast.makeText(context, text2, duration).show();
                     startClient(wifiP2pInfo);
                 }
                 // if group owner, then start the server
                 else {
-                    CharSequence text2 = "group owner\n";
-                    //Toast.makeText(context, text2, duration).show();
                     startServer(wifiP2pInfo);
                 }
 
                 updateUI();
             }
+
         };
 
 
@@ -149,7 +161,22 @@ public class RequestFileActivity extends AppCompatActivity {
         /**Handler to be used for performing delayed actions/runnable */
         mBroadcastHandler = new Handler();
         //mBroadcastHandler.postDelayed(mServiceBroadcastingRunnable, 1000);
+
     }
+
+//    class updateUI extends TimerTask {
+//        public void run() {
+//            Log.d("Timer Task", "running");
+//            if (statusText != null) {
+//                mStatus.setText(statusText);
+////            mStatus.setVisibility(View.VISIBLE);
+//                statusText = null;
+//            }
+//            if (progress != mProgress.getProgress()) {
+//                mProgress.setProgress(progress);
+//            }
+//        }
+//    }
 
     /**
      *  register the broadcast receiver with the intent values to be matched
@@ -157,6 +184,11 @@ public class RequestFileActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        Bundle extras = getIntent().getExtras();
+        if (extras != null) {
+            this.progress = extras.getInt("progress");
+            this.statusText = extras.getString("status");
+        }
         registerReceiver(mReceiver, mIntentFilter);
     }
 
@@ -166,7 +198,18 @@ public class RequestFileActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        getIntent().putExtra("progress", progress);
+        getIntent().putExtra("status", String.valueOf(statusText));
         unregisterReceiver(mReceiver);
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        getIntent().putExtra("progress", progress);
+        getIntent().putExtra("status", String.valueOf(statusText));
+        savedInstanceState.putInt("progress", progress);
+        savedInstanceState.putString("status", String.valueOf(statusText));
     }
 
     @Override
@@ -261,10 +304,6 @@ public class RequestFileActivity extends AppCompatActivity {
 
         // if file exists locally, terminate request
         if (containsFile(filename)) {
-            Context context = getApplicationContext();
-            CharSequence text = "Requested file exists on this device";
-            int duration = Toast.LENGTH_SHORT;
-            //Toast.makeText(context, text, duration).show();
             // TODO move to next request
             return;
         }
@@ -298,22 +337,24 @@ public class RequestFileActivity extends AppCompatActivity {
     }
 
     public void updateProgress() {
-        progressIncreased = true;
+        int newProgress = progress + progressDiff;
+        if (newProgress < mProgress.getMax()) {
+            progress = newProgress;
+        }
     }
 
     public void updateStatus(String status) {
-        newStatus = status;
+        statusText = status;
     }
 
     public void updateUI() {
-        if (newStatus != null) {
-            mStatus.setText(newStatus);
+        if (statusText != null) {
+            mStatus.setText(statusText);
 //            mStatus.setVisibility(View.VISIBLE);
-            newStatus = null;
+            statusText = null;
         }
-        if (progressIncreased) {
-            mProgress.incrementProgressBy(progressDiff);
-            progressIncreased = false;
+        if (progress != mProgress.getProgress()) {
+            mProgress.setProgress(progress);
         }
     }
 
@@ -327,28 +368,15 @@ public class RequestFileActivity extends AppCompatActivity {
 
                 @Override
                 public void onSuccess() {
-                    Context context = getApplicationContext();
-                    CharSequence text = "Discovery succeeded";
-                    int duration = Toast.LENGTH_SHORT;
-
-                    //Toast toast = Toast.makeText(context, text, duration);
-                    //toast.show();
+                    // TODO do something here?
                 }
 
                 @Override
                 public void onFailure(int i) {
-                    Context context = getApplicationContext();
-                    CharSequence text = "Discovery failed";
-                    int duration = Toast.LENGTH_SHORT;
-                    //Toast.makeText(context, text, duration).show();
                     Log.d("Discovery Failure", "reason " + i);
                 }
             });
         } else {
-            Context context = getApplicationContext();
-            CharSequence text = "Packet is null; no request to process";
-            int duration = Toast.LENGTH_SHORT;
-            //Toast.makeText(context, text, duration).show();
             Log.d("LookforPeers", "packet is null; no request to process");
         }
     }
@@ -395,27 +423,17 @@ public class RequestFileActivity extends AppCompatActivity {
                 mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
                     @Override
                     public void onSuccess() {
-                        Context context = getApplicationContext();
-                        CharSequence text = "Connection Successful: In Progress";
-                        int duration = Toast.LENGTH_SHORT;
-                        //Toast.makeText(context, text, duration).show();
+                        // TODO do something here?
                     }
 
                     @Override
                     public void onFailure(int i) {
-                        Context context = getApplicationContext();
-                        CharSequence text = "Connection Failed: In Progress";
-                        int duration = Toast.LENGTH_SHORT;
-                        //Toast.makeText(context, text, duration).show();
+                        // TODO do something here?
                     }
                 });
             }
         }
         else {
-            Context context = getApplicationContext();
-            CharSequence text = "Packet is null";
-            int duration = Toast.LENGTH_SHORT;
-            //Toast.makeText(context, text, duration).show();
             Log.d("connectToSpecificDevice", "packet is null");
         }
     }
@@ -437,12 +455,7 @@ public class RequestFileActivity extends AppCompatActivity {
                             @Override
                             public void onSuccess() {
                                 Log.d("disconnect", "removeGroup onSuccess -");
-
-                                // TODO remove this
-                                Context context = getApplicationContext();
-                                CharSequence text = "Disconnected";
-                                int duration = Toast.LENGTH_SHORT;
-                                //Toast.makeText(context, text, duration).show();
+                                // TODO do something here?
                             }
 
                             @Override
@@ -775,9 +788,6 @@ public class RequestFileActivity extends AppCompatActivity {
 //                mBroadcastHandler
 //                        .postDelayed(mServiceBroadcastingRunnable, 4000);
 
-                //TEMP -- for testing/debugging purposes
-                System.out.println("ACK: sending ack to:" + node);
-
             } else {
                 //ignore this
                 RequestFileActivity.this.packet = null;
@@ -852,32 +862,18 @@ public class RequestFileActivity extends AppCompatActivity {
             }
         }
 
-        protected void onProgressUpdate() {
-            Context context = getApplicationContext();
-            CharSequence text = "Sending...";
-            int duration = Toast.LENGTH_SHORT;
-            //Toast.makeText(context, text, duration).show();
-        }
-
         @Override
         protected void onPostExecute(String results) {
             disconnect();
             if(RequestFileActivity.this.packet != null) {
                 mBroadcastHandler
                         .postDelayed(mServiceBroadcastingRunnable, 2000);
-                //lookForPeers();
-//              switch (RequestFileActivity.this.packet.getPacketType()) {
-//                  case REQUEST:
-//                      broadcastRequest();
-//                      break;
-//                  default:
-//                      break;
-//              }
             }
             else if (results != null) {
                 Context context = getApplicationContext();
                 Intent intent = new Intent();
                 intent.setAction(Intent.ACTION_VIEW);
+
                 //https://stackoverflow.com/questions/12585747/how-to-open-a-file-in-android-via-an-intent#12585945
                 String ext = results.substring(results.indexOf('.')+1);
                 String mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
@@ -892,8 +888,6 @@ public class RequestFileActivity extends AppCompatActivity {
             }
             else {
                 Context context = getApplicationContext();
-                int duration = Toast.LENGTH_SHORT;
-                //Toast.makeText(context, progress, duration).show();
                 Intent intent = new Intent(context, MainActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(intent);
@@ -979,11 +973,6 @@ public class RequestFileActivity extends AppCompatActivity {
 //                InputStream inputStream = client.getInputStream();
 //                String filename = inputStream.toString();
 //
-////                text = "recieved " + filename;
-////                Toast.makeText(context, text, duration).show();
-//
-//                System.out.println("Recieved " + filename + "!");
-//
 //                serverSocket.close();
 //
 //                boolean returned = returnFile(filename);
@@ -1035,50 +1024,40 @@ public class RequestFileActivity extends AppCompatActivity {
             return null;
         }
 
-        private void copyFile(InputStream inputStream, FileOutputStream fileOutputStream) throws IOException {
-            byte[] buffer = new byte[1024];
-            int read;
-            while ((read = inputStream.read(buffer)) != -1) {
-                fileOutputStream.write(buffer, 0, read);
-            }
-        }
+//        private void copyFile(InputStream inputStream, FileOutputStream fileOutputStream) throws IOException {
+//            byte[] buffer = new byte[1024];
+//            int read;
+//            while ((read = inputStream.read(buffer)) != -1) {
+//                fileOutputStream.write(buffer, 0, read);
+//            }
+//        }
 
-        /**
-         * If this phone has the requested file, send it back
-         *
-         * @param filename requested file
-         * @return true if had file and sent it back, false otherwise
-         */
-        private boolean returnFile(String filename) {
-            Context context = getApplicationContext();
-            final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
-            List<MantaFile> files = db.getFilesWithName(filename);
-            MantaFile toSend = null;
-            if (files.isEmpty()) {
-                return false;
-            } else {
-                // arbitrarily send first file in list of files with this name
-                // assume there shouldn't be more than one file with a given name
-                toSend = files.get(0);
-            }
-            // TODO send toSend back
-            return true;
-        }
-
-        protected void onProgressUpdate() {
-            Context context = getApplicationContext();
-            CharSequence text = "Sending...";
-            int duration = Toast.LENGTH_SHORT;
-            //Toast.makeText(context, text, duration).show();
-        }
+//        /**
+//         * If this phone has the requested file, send it back
+//         *
+//         * @param filename requested file
+//         * @return true if had file and sent it back, false otherwise
+//         */
+//        private boolean returnFile(String filename) {
+//            Context context = getApplicationContext();
+//            final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
+//            List<MantaFile> files = db.getFilesWithName(filename);
+//            MantaFile toSend = null;
+//            if (files.isEmpty()) {
+//                return false;
+//            } else {
+//                // arbitrarily send first file in list of files with this name
+//                // assume there shouldn't be more than one file with a given name
+//                toSend = files.get(0);
+//            }
+//            // TODO send toSend back
+//            return true;
+//        }
 
         @Override
         protected void onPostExecute(String results) {
             disconnect();
             Context context = getApplicationContext();
-            CharSequence text = "Sent";
-            int duration = Toast.LENGTH_SHORT;
-            //Toast.makeText(context, text, duration).show();
             Intent intent = new Intent(context, MainActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(intent);
