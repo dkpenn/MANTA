@@ -58,9 +58,13 @@ public class RequestFileActivity extends AppCompatActivity {
     String toConnectDevice;
     Packet packet;
     Handler mBroadcastHandler;
+
+    boolean progressIncreased;
     private ProgressBar mProgress;
-    private TextView mStatus;
     int progressDiff;
+
+    String newStatus;
+    private TextView mStatus;
 
 
     @Override
@@ -73,11 +77,13 @@ public class RequestFileActivity extends AppCompatActivity {
 
         mProgress = (ProgressBar) findViewById(R.id.progressBar5);
         mProgress.setProgress(0);
-        mProgress.setVisibility(View.GONE);
+//        mProgress.setVisibility(View.GONE);
+        progressIncreased = false;
         progressDiff = mProgress.getMax() / 2;
 
         mStatus = (TextView) findViewById(R.id.status);
-        mStatus.setVisibility(View.GONE);
+//        mStatus.setVisibility(View.GONE);
+        newStatus = null;
 
         packet = null;
 
@@ -124,6 +130,8 @@ public class RequestFileActivity extends AppCompatActivity {
                     //Toast.makeText(context, text2, duration).show();
                     startServer(wifiP2pInfo);
                 }
+
+                updateUI();
             }
         };
 
@@ -248,7 +256,8 @@ public class RequestFileActivity extends AppCompatActivity {
     public void requestByFilename(View view) {
         String filename = mEdit.getText().toString();
         mProgress.setVisibility(View.VISIBLE);
-        mStatus.setVisibility(View.VISIBLE);
+
+        updateStatus("REQUEST " + filename);
 
         // if file exists locally, terminate request
         if (containsFile(filename)) {
@@ -289,11 +298,23 @@ public class RequestFileActivity extends AppCompatActivity {
     }
 
     public void updateProgress() {
-        mProgress.incrementProgressBy(progressDiff);
+        progressIncreased = true;
     }
 
     public void updateStatus(String status) {
-        mStatus.setText(status);
+        newStatus = status;
+    }
+
+    public void updateUI() {
+        if (newStatus != null) {
+            mStatus.setText(newStatus);
+//            mStatus.setVisibility(View.VISIBLE);
+            newStatus = null;
+        }
+        if (progressIncreased) {
+            mProgress.incrementProgressBy(progressDiff);
+            progressIncreased = false;
+        }
     }
 
 
@@ -558,7 +579,9 @@ public class RequestFileActivity extends AppCompatActivity {
                                         filename);
                                 //change packet to ACK
                                 sendAck(pkt);
+                                updateStatus("ACK " + filename);
                             } else {
+                                updateStatus("REQUEST " + filename);
                                 progress = "to broadcast packet";
                                 broadcastRequest(pkt);
                             }
@@ -574,10 +597,12 @@ public class RequestFileActivity extends AppCompatActivity {
                             if (WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
                                 RequestFileActivity.this.updateProgress();
                                 sendSend(pkt);
+                                updateStatus("SEND " + filename);
                             } else {
                                 pkt.decrPathPosition();
                                 RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
                                 RequestFileActivity.this.packet = pkt;
+                                updateStatus("ACK " + filename);
                             }
 
                             System.out.println("ack sending to " + RequestFileActivity.this.toConnectDevice);
@@ -592,10 +617,12 @@ public class RequestFileActivity extends AppCompatActivity {
                             if (pkt.isLast(
                                     WifiDirectBroadcastReceiver.mDevice.deviceName)) {
                                 sendFilePacket(pkt);
+                                updateStatus("FILE " + filename);
                             } else {
                                 pkt.incrPathPosition();
                                 RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
                                 RequestFileActivity.this.packet = pkt;
+                                updateStatus("SEND " + filename);
                             }
                             break;
                         case FILE:
@@ -617,9 +644,11 @@ public class RequestFileActivity extends AppCompatActivity {
                                 RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
                                 RequestFileActivity.this.packet = pkt;
                                 RequestFileActivity.this.updateProgress();
+                                updateStatus("FILE " + filename);
                             }
                             else {
                                 file = filename;
+                                updateStatus("Downloading " + filename);
                             }
 //                            if (WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
 //                                final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
