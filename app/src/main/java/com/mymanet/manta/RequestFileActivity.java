@@ -409,85 +409,88 @@ public class RequestFileActivity extends AppCompatActivity {
         protected String doInBackground(InetAddress[] params) {
             /* busy wait to get server hopefully running,
              * TODO: check if we can remove this and it still works */
-            for (int i = 0; i < 1000; i++) {
-
+            if(packet != null) {
+                Log.d("Client", "packet is supplied, should not be client");
             }
+            else {
+                for (int i = 0; i < 1000; i++) {
 
-            System.out.println("client started");
+                }
 
-            context = getApplicationContext();
+                System.out.println("client started");
 
-            InetAddress groupOwnerAddress = params[0];
-            int port = 8888;
-            //int len; //apparently not used so removed
-            Socket socket = new Socket();
-            //byte[] buf = new byte[1024]; //also apparently not used, so removed
+                context = getApplicationContext();
 
-            OutputStream outputStream = null;
-            InputStream inputStream = null;
-            InputStream fileInputStream = null;
-            PrintWriter out = null;
-            String file = null;
+                InetAddress groupOwnerAddress = params[0];
+                int port = 8888;
+                //int len; //apparently not used so removed
+                Socket socket = new Socket();
+                //byte[] buf = new byte[1024]; //also apparently not used, so removed
+
+                OutputStream outputStream = null;
+                InputStream inputStream = null;
+                InputStream fileInputStream = null;
+                PrintWriter out = null;
+                String file = null;
 
                             /*debugger*/
-            if (Debug.isDebuggerConnected())
-                Debug.waitForDebugger();
-
-            try {
-                /** Create a client socket with the host, port and timeout information
-                 *
-                 */
-                socket.bind(null);
-
-                /*changed timeout to 5500ms so connection has time to happen */
-                socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 15000);
-
-                /*debugger*/
                 if (Debug.isDebuggerConnected())
                     Debug.waitForDebugger();
 
-                progress = "connected";
+                try {
+                    /** Create a client socket with the host, port and timeout information
+                     *
+                     */
+                    socket.bind(null);
+
+                /*changed timeout to 5500ms so connection has time to happen */
+                    socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 30000);
+
+                /*debugger*/
+                    if (Debug.isDebuggerConnected())
+                        Debug.waitForDebugger();
+
+                    progress = "connected";
 
                 /* get read and write ends of stream socket */
-                outputStream = socket.getOutputStream();
-                inputStream = socket.getInputStream();
+                    outputStream = socket.getOutputStream();
+                    inputStream = socket.getInputStream();
 
-                /** Read information sent by server about packet */
+                    /** Read information sent by server about packet */
 
-                String packetTypeString = null;
-                String srcDevice = null;
-                String filename = null;
-                int ttl = 0;
-                String path = null;
-                int pathPosition = 0;
+                    String packetTypeString = null;
+                    String srcDevice = null;
+                    String filename = null;
+                    int ttl = 0;
+                    String path = null;
+                    int pathPosition = 0;
 
-                packetTypeString = nextToken(inputStream);
+                    packetTypeString = nextToken(inputStream);
 
-                if(packetTypeString == null) {
-                    Log.e("client", "no packet supplied");
-                }
-                else {
-                    Log.v("client", packetTypeString);
+                    if (packetTypeString == null) {
+                        Log.e("client", "no packet supplied");
+                    } else {
+                        Log.v("client", packetTypeString);
 
-                    PacketType packetType = PacketType.fromInt(Integer.parseInt(packetTypeString));
+                        PacketType packetType = PacketType.fromInt(Integer.parseInt(packetTypeString));
 
-                    srcDevice = nextToken(inputStream);
-                    filename = nextToken(inputStream);
-                    ttl = Integer.parseInt(nextToken(inputStream));
-                    path = nextToken(inputStream);
-                    pathPosition = Integer.parseInt(nextToken(inputStream));
+                        srcDevice = nextToken(inputStream);
+                        filename = nextToken(inputStream);
+                        ttl = Integer.parseInt(nextToken(inputStream));
+                        path = nextToken(inputStream);
+                        pathPosition = Integer.parseInt(nextToken(inputStream));
 
-                    Packet pkt = new Packet(filename, ttl, srcDevice, packetType, path, pathPosition);
+                        Packet pkt = new Packet(filename, ttl, srcDevice, packetType, path, pathPosition);
 
-                    System.out.println("got packet");
+                        System.out.println("got packet");
 
-                    switch (packetType) {
-                        case REQUEST:
+                        switch (packetType) {
+                            case REQUEST:
 
-                            System.out.println("request packet for: " + filename + " from: " + srcDevice);
-                            progress = "received packet";
+                                System.out.println("request packet for: " + filename + " from: " + srcDevice);
+                                progress = "received packet";
 
-                            // if request has been seen before, ignore it, otherwise record it
+                                // if request has been seen before, ignore it, otherwise record it
 //                        final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
 //
 //                        if (db.requestSeen(filename, srcDevice)) {
@@ -498,72 +501,72 @@ public class RequestFileActivity extends AppCompatActivity {
 //                            db.addFilterRequest(filename, srcDevice);
 //                        }
 
-                            //This packet will be processed
-                            //RequestFileActivity.this.packet = pkt;
-                            String deviceName = WifiDirectBroadcastReceiver.mDevice.deviceName;
-                            //Add self to packet path
-
-                            //RequestFileActivity.this.packet.addToPath(deviceName);
-
-                            pkt.addToPath(deviceName);
-                            // if the request has reached a fileowner, unicast this back along the path
-                            // otherwise, broadcast request to other peers
-                            if (containsFile(filename)) {
-                                progress = "send ack pack";
-                                System.out.println("to connect device: " +
-                                        RequestFileActivity.this.toConnectDevice + "\nsrc: " + srcDevice);
-
-                                System.out.println("found file: " +
-                                        filename);
-                                //change packet to ACK
-                                sendAck(pkt);
-                            } else {
-                                progress = "to broadcast packet";
-                                broadcastRequest(pkt);
-                            }
-
-                            break;
-                        case ACK:
-
-                            System.out.println("ack packet for: " + filename + " from: " + srcDevice);
-                            progress = "received packet";
-
-                            // if the ack has reached the requester, send a request for the file itself
-                            // otherwise continue
-                            if (WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
+                                //This packet will be processed
                                 //RequestFileActivity.this.packet = pkt;
-                                sendSend(pkt);
-                            } else {
-                                pkt.decrPathPosition();
-                                RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
-                                RequestFileActivity.this.packet = pkt;
-                            }
+                                String deviceName = WifiDirectBroadcastReceiver.mDevice.deviceName;
+                                //Add self to packet path
 
-                            System.out.println("ack sending to " + RequestFileActivity.this.toConnectDevice);
+                                //RequestFileActivity.this.packet.addToPath(deviceName);
 
-                            break;
-                        case SEND:
+                                pkt.addToPath(deviceName);
+                                // if the request has reached a fileowner, unicast this back along the path
+                                // otherwise, broadcast request to other peers
+                                if (containsFile(filename)) {
+                                    progress = "send ack pack";
+                                    System.out.println("to connect device: " +
+                                            RequestFileActivity.this.toConnectDevice + "\nsrc: " + srcDevice);
 
-                            System.out.println("send packet for: " + filename + " from: " + srcDevice);
-                            progress = "received packet";
+                                    System.out.println("found file: " +
+                                            filename);
+                                    //change packet to ACK
+                                    sendAck(pkt);
+                                } else {
+                                    progress = "to broadcast packet";
+                                    broadcastRequest(pkt);
+                                }
 
-                            // if fileowner has been reached, send the file back
-                            if (pkt.isLast(
-                                    WifiDirectBroadcastReceiver.mDevice.deviceName)) {
-                                sendFilePacket(pkt);
-                            } else {
-                                pkt.incrPathPosition();
-                                RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
-                                RequestFileActivity.this.packet = pkt;
-                            }
-                            break;
-                        case FILE:
+                                break;
+                            case ACK:
 
-                            System.out.println("file packet for: " + filename + " from: " + srcDevice);
-                            progress = "received packet";
+                                System.out.println("ack packet for: " + filename + " from: " + srcDevice);
+                                progress = "received packet";
 
-                            // if requester has been reached, stop because transaction is complete
-                            // otherwise continue
+                                // if the ack has reached the requester, send a request for the file itself
+                                // otherwise continue
+                                if (WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
+                                    //RequestFileActivity.this.packet = pkt;
+                                    sendSend(pkt);
+                                } else {
+                                    pkt.decrPathPosition();
+                                    RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
+                                    RequestFileActivity.this.packet = pkt;
+                                }
+
+                                System.out.println("ack sending to " + RequestFileActivity.this.toConnectDevice);
+
+                                break;
+                            case SEND:
+
+                                System.out.println("send packet for: " + filename + " from: " + srcDevice);
+                                progress = "received packet";
+
+                                // if fileowner has been reached, send the file back
+                                if (pkt.isLast(
+                                        WifiDirectBroadcastReceiver.mDevice.deviceName)) {
+                                    sendFilePacket(pkt);
+                                } else {
+                                    pkt.incrPathPosition();
+                                    RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
+                                    RequestFileActivity.this.packet = pkt;
+                                }
+                                break;
+                            case FILE:
+
+                                System.out.println("file packet for: " + filename + " from: " + srcDevice);
+                                progress = "received packet";
+
+                                // if requester has been reached, stop because transaction is complete
+                                // otherwise continue
                                 final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
                                         filename);
 
@@ -571,15 +574,14 @@ public class RequestFileActivity extends AppCompatActivity {
 
                                 copyFile(inputStream, new FileOutputStream(f));
 
-                            if (!WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
-                                pkt.decrPathPosition();
-                                RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
-                                RequestFileActivity.this.packet = pkt;
+                                if (!WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
+                                    pkt.decrPathPosition();
+                                    RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
+                                    RequestFileActivity.this.packet = pkt;
 
-                            }
-                            else {
-                                file = filename;
-                            }
+                                } else {
+                                    file = filename;
+                                }
 //                            if (WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
 //                                final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
 //                                        filename);
@@ -591,45 +593,46 @@ public class RequestFileActivity extends AppCompatActivity {
 //                                RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
 //                                RequestFileActivity.this.packet = pkt;
 //                            }
-                            break;
-                        default:
-                            break;
+                                break;
+                            default:
+                                break;
+                        }
                     }
-                }
 
-            } catch (FileNotFoundException e) {
-                Log.e("request file", e.getMessage());
-            } catch (IOException e) {
-                Log.e("request file", e.getMessage());
-            } catch (NumberFormatException e) {
-                Log.e("request file ", e.getMessage());
-            } finally {
-                if (outputStream != null) {
-                    try {
-                        outputStream.close();
-                    } catch (IOException ioex) {
-                        ioex.printStackTrace();
+                } catch (FileNotFoundException e) {
+                    Log.e("request file", e.getMessage());
+                } catch (IOException e) {
+                    Log.e("request file", e.getMessage());
+                } catch (NumberFormatException e) {
+                    Log.e("request file ", e.getMessage());
+                } finally {
+                    if (outputStream != null) {
+                        try {
+                            outputStream.close();
+                        } catch (IOException ioex) {
+                            ioex.printStackTrace();
+                        }
                     }
-                }
-                if (fileInputStream != null) {
-                    try {
-                        fileInputStream.close();
-                    } catch (IOException ioex) {
-                        ioex.printStackTrace();
+                    if (fileInputStream != null) {
+                        try {
+                            fileInputStream.close();
+                        } catch (IOException ioex) {
+                            ioex.printStackTrace();
+                        }
                     }
-                }
 
-                if (inputStream != null) {
-                    try {
-                        inputStream.close();
-                    } catch (IOException ioex) {
-                        ioex.printStackTrace();
+                    if (inputStream != null) {
+                        try {
+                            inputStream.close();
+                        } catch (IOException ioex) {
+                            ioex.printStackTrace();
+                        }
                     }
-                }
 
+                }
+                return file;
             }
-
-            return file;
+            return null;
         }
 
         /* http://stackoverflow.com/questions/8488433/reading-lines-from-an-inputstream-without-buffering */
@@ -791,7 +794,7 @@ public class RequestFileActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String results) {
-            disconnect();
+            //disconnect();
             if(RequestFileActivity.this.packet != null) {
                 mBroadcastHandler
                         .postDelayed(mServiceBroadcastingRunnable, 2000);
