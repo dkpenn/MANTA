@@ -166,21 +166,6 @@ public class RequestFileActivity extends AppCompatActivity {
 
     }
 
-
-//    class updateUI extends TimerTask {
-//        public void run() {
-//            Log.d("Timer Task", "running");
-//            if (statusText != null) {
-//                mStatus.setText(statusText);
-////            mStatus.setVisibility(View.VISIBLE);
-//                statusText = null;
-//            }
-//            if (progress != mProgress.getProgress()) {
-//                mProgress.setProgress(progress);
-//            }
-//        }
-//    }
-
     private Handler uiHandler = new Handler()
     {
         // This method should be implemented in order to update the UI. Any data
@@ -549,6 +534,9 @@ public class RequestFileActivity extends AppCompatActivity {
                             System.out.print("");
                         }
                         try {
+                            socket.close();
+                            socket = new Socket();
+                            socket.bind(null);
                             socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 30000);
                         } catch(SocketTimeoutException e1) {
                             for(int i = 0; i < 3000; i++) {
@@ -556,6 +544,9 @@ public class RequestFileActivity extends AppCompatActivity {
                             }
                             Log.e("client connection", "fail to make connection with server");
                             e1.printStackTrace();
+                            socket.close();
+                            socket = new Socket();
+                            socket.bind(null);
                             socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 30000);
                         }
                         catch(IOException e1) {
@@ -564,6 +555,9 @@ public class RequestFileActivity extends AppCompatActivity {
                             }
                             Log.e("client connection", "fail to make connection with server");
                             e1.printStackTrace();
+                            socket.close();
+                            socket = new Socket();
+                            socket.bind(null);
                             socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 30000);
                         }
                     } catch (IOException e) {
@@ -572,6 +566,9 @@ public class RequestFileActivity extends AppCompatActivity {
                         }
                         Log.e("client connection", "fail to make connection with server");
                         e.printStackTrace();
+                        socket.close();
+                        socket = new Socket();
+                        socket.bind(null);
                         try {
                             socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 30000);
                         } catch(SocketTimeoutException e1) {
@@ -580,6 +577,9 @@ public class RequestFileActivity extends AppCompatActivity {
                             }
                             Log.e("client connection", "fail to make connection with server");
                             e1.printStackTrace();
+                            socket.close();
+                            socket = new Socket();
+                            socket.bind(null);
                             socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 30000);
                         }
                         catch(IOException e1) {
@@ -588,6 +588,9 @@ public class RequestFileActivity extends AppCompatActivity {
                             }
                             Log.e("client connection", "fail to make connection with server");
                             e1.printStackTrace();
+                            socket.close();
+                            socket = new Socket();
+                            socket.bind(null);
                             socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 30000);
                         }
                     }
