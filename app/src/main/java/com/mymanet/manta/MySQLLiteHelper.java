@@ -21,7 +21,7 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
 
     // database constants
     private static final String DATABASE_NAME = "filenames.db";
-    private static final int DATABASE_VERSION = 2; // UPDATE every time db is updated
+    private static final int DATABASE_VERSION = 3; // UPDATE every time db is updated
 
     // tables
 
@@ -65,10 +65,15 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
             COLUMN_PACKET + " text, " + COLUMN_TARGET + " text, primary key (" + COLUMN_PACKET +
             ", " + COLUMN_TARGET + "));";
 
+    private static final String TABLE_STATUS = "status_messages";
+    private static final String COLUMN_STATUSMSG = "status_msg";
+    private static final String STATUS_CREATE = "create table " + TABLE_STATUS + " (" +
+            COLUMN_STATUSMSG + " text primary key);";
+
     //Database creation sql statement
     private static final String DATABASE_CREATE =
             FILES_CREATE + REQUEST_CREATE + RESPONSE_CREATE + TRUSTED_CREATE + FILTER_CREATE +
-            SEND_CREATE;
+            SEND_CREATE + STATUS_CREATE;
 
     private static MySQLLiteHelper instance;
 
@@ -92,6 +97,7 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
         sqLiteDatabase.execSQL(RESPONSE_CREATE);
         sqLiteDatabase.execSQL(TRUSTED_CREATE);
         sqLiteDatabase.execSQL(FILTER_CREATE);
+        sqLiteDatabase.execSQL(STATUS_CREATE);
         sqLiteDatabase.execSQL(SEND_CREATE);
     }
 
@@ -105,6 +111,8 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_RESPONSE + ";");
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_FILTER + ";");
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_TRUSTED + ";");
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_STATUS + ";");
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_SEND + ";");
         onCreate(sqLiteDatabase);
 
     }
@@ -628,4 +636,77 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
     // TODO String getNextPacket()
     // TODO void addPacket(String packet, String target)
 
+    // ** STATUS TABLE FUNCTION
+
+    String getStatusMessage() {
+        String msg = null;
+        String query = "SELECT * FROM " + TABLE_STATUS + ";";
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        //db.beginTransaction();
+
+        Cursor cursor = db.rawQuery(query, null);
+        if (cursor.moveToFirst()) {
+            msg = cursor.getString(0);
+        }
+
+        cursor.close();
+
+        return msg;
+    }
+
+    public void deleteAllStatusMsgs() {
+
+        // 1. get reference to writable DB
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        //db.beginTransaction();
+        // 2. delete
+        db.delete(TABLE_STATUS,
+                "1",
+                null);
+
+        // 3. close
+        //db.endTransaction();
+        //db.close();
+
+        Log.d("deleteAllStatusMessages", "deleted everything");
+
+    }
+
+    void updateStatusMessage(String statusMsg) {
+//        String query = "UPDATE " + TABLE_REQUEST + " SET " + COLUMN_STATUSMSG + "= " +
+//                statusMsg + ";";
+//
+//        SQLiteDatabase db = this.getWritableDatabase();
+//        //db.beginTransaction();
+//
+//        db.execSQL(query);
+//
+//        //db.endTransaction();
+//        //db.close();
+        deleteAllStatusMsgs();
+        addStatusMsg(statusMsg);
+
+    }
+
+    void addStatusMsg(String statusMsg) {
+        String query = "INSERT INTO " + TABLE_STATUS + " (" + COLUMN_STATUSMSG + ") VALUES " +
+                "(\"" + statusMsg + "\""  + ");";
+
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        //db.beginTransaction();
+
+        try {
+            db.execSQL(query);
+
+        } catch (android.database.sqlite.SQLiteConstraintException e) {
+            Log.e("status table", "Filename " + statusMsg + " already exists in table");
+        } finally {
+            //db.endTransaction();
+        }
+        //db.close();
+
+    }
 }

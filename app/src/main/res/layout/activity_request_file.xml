@@ -57,7 +57,9 @@
         android:layout_below="@+id/progressBar5"
         android:layout_alignTop="@+id/progressBar5"
         android:layout_alignLeft="@+id/progressBar5"
-        android:layout_alignStart="@+id/progressBar5" />
+        android:layout_alignStart="@+id/progressBar5"
+        android:layout_centerHorizontal="true"
+        />
 
     <Button
         android:text="Scan for Peers"
