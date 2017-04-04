@@ -87,8 +87,8 @@ public class RequestFileActivity extends AppCompatActivity {
 //                progress = extras.getInt("progress");
 //                statusText = extras.getString("status");
 //            } else {
-                progress = 0;
-                statusText = null;
+            progress = 0;
+            statusText = null;
 //            }
         } else {
             progress = savedInstanceState.getInt("progress");
@@ -417,7 +417,7 @@ public class RequestFileActivity extends AppCompatActivity {
                  * connection the most likely to be the group owner.
                  * This is important for the invariant that we have regarding who the group owner is
                  * (See ConnectionInfoListener in onCreate for more details)
-                */
+                 */
                 config.groupOwnerIntent = 15;
 
                 mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
@@ -565,89 +565,77 @@ public class RequestFileActivity extends AppCompatActivity {
                                 System.out.println("request packet for: " + filename + " from: " + srcDevice);
                                 progress = "received packet";
 
-                                // if request has been seen before, ignore it, otherwise record it
-//                        final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
-//
-//                        if (db.requestSeen(filename, srcDevice)) {
-//                            //stop processing packet (ignore)
-//                            //return?
-//                            break;
-//                        } else {
-//                            db.addFilterRequest(filename, srcDevice);
-//                        }
 
-                            //This packet will be processed
-                            //RequestFileActivity.this.packet = pkt;
-                            String deviceName = WifiDirectBroadcastReceiver.mDevice.deviceName;
-                            //Add self to packet path
+                                //This packet will be processed
+                                String deviceName = WifiDirectBroadcastReceiver.mDevice.deviceName;
+                                //Add self to packet path
 
-                            //RequestFileActivity.this.packet.addToPath(deviceName);
+                                pkt.addToPath(deviceName);
 
-                            pkt.addToPath(deviceName);
-                            // if the request has reached a fileowner, unicast this back along the path
-                            // otherwise, broadcast request to other peers
-                            if (containsFile(filename)) {
-                                progress = "send ack pack";
-                                System.out.println("to connect device: " +
-                                        RequestFileActivity.this.toConnectDevice + "\nsrc: " + srcDevice);
+                                // if the request has reached a fileowner, unicast this back along the path
+                                // otherwise, broadcast request to other peers
+                                if (containsFile(filename)) {
+                                    progress = "send ack pack";
+                                    System.out.println("to connect device: " +
+                                            RequestFileActivity.this.toConnectDevice + "\nsrc: " + srcDevice);
 
-                                System.out.println("found file: " +
-                                        filename);
-                                //change packet to ACK
-                                sendAck(pkt);
-                                updateStatus("ACK " + filename);
-                            } else {
-                                updateStatus("REQUEST " + filename);
-                                progress = "to broadcast packet";
-                                broadcastRequest(pkt);
-                            }
+                                    System.out.println("found file: " +
+                                            filename);
+                                    //change packet to ACK
+                                    sendAck(pkt);
+                                    updateStatus("ACK " + filename);
+                                } else {
+                                    updateStatus("REQUEST " + filename);
+                                    progress = "to broadcast packet";
+                                    broadcastRequest(pkt);
+                                }
 
-                            break;
-                        case ACK:
+                                break;
+                            case ACK:
 
-                            System.out.println("ack packet for: " + filename + " from: " + srcDevice);
-                            progress = "received packet";
+                                System.out.println("ack packet for: " + filename + " from: " + srcDevice);
+                                progress = "received packet";
 
-                            // if the ack has reached the requester, send a request for the file itself
-                            // otherwise continue
-                            if (WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
-                                RequestFileActivity.this.updateProgress();
-                                sendSend(pkt);
-                                updateStatus("SEND " + filename);
-                            } else {
-                                pkt.decrPathPosition();
-                                RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
-                                RequestFileActivity.this.packet = pkt;
-                                updateStatus("ACK " + filename);
-                            }
+                                // if the ack has reached the requester, send a request for the file itself
+                                // otherwise continue
+                                if (WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
+                                    RequestFileActivity.this.updateProgress();
+                                    sendSend(pkt);
+                                    updateStatus("SEND " + filename);
+                                } else {
+                                    pkt.decrPathPosition();
+                                    RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
+                                    RequestFileActivity.this.packet = pkt;
+                                    updateStatus("ACK " + filename);
+                                }
 
-                            System.out.println("ack sending to " + RequestFileActivity.this.toConnectDevice);
+                                System.out.println("ack sending to " + RequestFileActivity.this.toConnectDevice);
 
-                            break;
-                        case SEND:
+                                break;
+                            case SEND:
 
-                            System.out.println("send packet for: " + filename + " from: " + srcDevice);
-                            progress = "received packet";
+                                System.out.println("send packet for: " + filename + " from: " + srcDevice);
+                                progress = "received packet";
 
-                            // if fileowner has been reached, send the file back
-                            if (pkt.isLast(
-                                    WifiDirectBroadcastReceiver.mDevice.deviceName)) {
-                                sendFilePacket(pkt);
-                                updateStatus("FILE " + filename);
-                            } else {
-                                pkt.incrPathPosition();
-                                RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
-                                RequestFileActivity.this.packet = pkt;
-                                updateStatus("SEND " + filename);
-                            }
-                            break;
-                        case FILE:
+                                // if fileowner has been reached, send the file back
+                                if (pkt.isLast(
+                                        WifiDirectBroadcastReceiver.mDevice.deviceName)) {
+                                    sendFilePacket(pkt);
+                                    updateStatus("FILE " + filename);
+                                } else {
+                                    pkt.incrPathPosition();
+                                    RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
+                                    RequestFileActivity.this.packet = pkt;
+                                    updateStatus("SEND " + filename);
+                                }
+                                break;
+                            case FILE:
 
-                            System.out.println("file packet for: " + filename + " from: " + srcDevice);
-                            progress = "received packet";
+                                System.out.println("file packet for: " + filename + " from: " + srcDevice);
+                                progress = "received packet";
 
-                            // if requester has been reached, stop because transaction is complete
-                            // otherwise continue
+                                // if requester has been reached, stop because transaction is complete
+                                // otherwise continue
                                 final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
                                         filename);
 
@@ -655,17 +643,17 @@ public class RequestFileActivity extends AppCompatActivity {
 
                                 copyFile(inputStream, new FileOutputStream(f));
 
-                            if (!WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
-                                pkt.decrPathPosition();
-                                RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
-                                RequestFileActivity.this.packet = pkt;
-                                RequestFileActivity.this.updateProgress();
-                                updateStatus("FILE " + filename);
-                            }
-                            else {
-                                file = filename;
-                                updateStatus("Downloading " + filename);
-                            }
+                                if (!WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
+                                    pkt.decrPathPosition();
+                                    RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
+                                    RequestFileActivity.this.packet = pkt;
+                                    RequestFileActivity.this.updateProgress();
+                                    updateStatus("FILE " + filename);
+                                }
+                                else {
+                                    file = filename;
+                                    updateStatus("Downloading " + filename);
+                                }
                                 break;
                             default:
                                 break;
@@ -963,13 +951,6 @@ public class RequestFileActivity extends AppCompatActivity {
                      *  If this code is reached, a client has connected and transferred data
                      */
 
-//                InputStream inputStream = client.getInputStream();
-//                String filename = inputStream.toString();
-//
-//                serverSocket.close();
-//
-//                boolean returned = returnFile(filename);
-
                 /* ONLY FOR DEMO PURPOSES (ALSO ASSUMING ONLY SEND TO ONE PEER) */
                     RequestFileActivity.this.packet = null;
 
@@ -1016,36 +997,6 @@ public class RequestFileActivity extends AppCompatActivity {
             }
             return null;
         }
-
-//        private void copyFile(InputStream inputStream, FileOutputStream fileOutputStream) throws IOException {
-//            byte[] buffer = new byte[1024];
-//            int read;
-//            while ((read = inputStream.read(buffer)) != -1) {
-//                fileOutputStream.write(buffer, 0, read);
-//            }
-//        }
-
-//        /**
-//         * If this phone has the requested file, send it back
-//         *
-//         * @param filename requested file
-//         * @return true if had file and sent it back, false otherwise
-//         */
-//        private boolean returnFile(String filename) {
-//            Context context = getApplicationContext();
-//            final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
-//            List<MantaFile> files = db.getFilesWithName(filename);
-//            MantaFile toSend = null;
-//            if (files.isEmpty()) {
-//                return false;
-//            } else {
-//                // arbitrarily send first file in list of files with this name
-//                // assume there shouldn't be more than one file with a given name
-//                toSend = files.get(0);
-//            }
-//            // TODO send toSend back
-//            return true;
-//        }
 
         @Override
         protected void onPostExecute(String results) {
