@@ -510,7 +510,7 @@ public class RequestFileActivity extends AppCompatActivity {
             else {
                 System.out.println("client started");
 
-                for(int i = 0; i < 3000; i++) {
+                for(int i = 0; i < 10000; i++) {
                     System.out.print("");
                 }
 
@@ -1066,7 +1066,10 @@ public class RequestFileActivity extends AppCompatActivity {
                             System.out.println("start sending file");
                             while ((len = fileInputStream.read(buf)) != -1) {
                                 outputStream.write(buf, 0, len);
+                                outputStream.flush();
                             }
+                            outputStream.flush();
+                            outputStream.close();
                             System.out.println("finish sending file");
                         default:
                             break;
