@@ -43,7 +43,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_above="@+id/button11"
+        android:layout_below="@+id/button6"
         android:layout_centerHorizontal="true"
+        android:layout_marginTop="15dp"
         android:layout_marginBottom="144dp"
         android:id="@+id/progressBar5" />
 
@@ -52,6 +54,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/status"
         android:layout_marginTop="64dp"
+        android:layout_below="@+id/progressBar5"
         android:layout_alignTop="@+id/progressBar5"
         android:layout_alignLeft="@+id/progressBar5"
         android:layout_alignStart="@+id/progressBar5" />

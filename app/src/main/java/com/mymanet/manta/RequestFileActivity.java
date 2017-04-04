@@ -26,7 +26,6 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -42,6 +41,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -300,7 +300,7 @@ public class RequestFileActivity extends AppCompatActivity {
         String filename = mEdit.getText().toString();
         mProgress.setVisibility(View.VISIBLE);
 
-        updateStatus("REQUEST " + filename);
+        //updateStatus("REQUEST " + filename);
 
         // if file exists locally, terminate request
         if (containsFile(filename)) {
@@ -519,7 +519,12 @@ public class RequestFileActivity extends AppCompatActivity {
                     socket.bind(null);
 
                 /*changed timeout to 5500ms so connection has time to happen */
-                    socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 30000);
+                    //try connecting twice
+                    try {
+                        socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 30000);
+                    } catch (SocketTimeoutException e) {
+                        socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 30000);
+                    }
 
                 /*debugger*/
                     if (Debug.isDebuggerConnected())
@@ -583,9 +588,9 @@ public class RequestFileActivity extends AppCompatActivity {
                                             filename);
                                     //change packet to ACK
                                     sendAck(pkt);
-                                    updateStatus("ACK " + filename);
+                                    //updateStatus("ACK " + filename);
                                 } else {
-                                    updateStatus("REQUEST " + filename);
+                                    //updateStatus("REQUEST " + filename);
                                     progress = "to broadcast packet";
                                     broadcastRequest(pkt);
                                 }
@@ -601,12 +606,12 @@ public class RequestFileActivity extends AppCompatActivity {
                                 if (WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
                                     RequestFileActivity.this.updateProgress();
                                     sendSend(pkt);
-                                    updateStatus("SEND " + filename);
+                                    //updateStatus("SEND " + filename);
                                 } else {
                                     pkt.decrPathPosition();
                                     RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
                                     RequestFileActivity.this.packet = pkt;
-                                    updateStatus("ACK " + filename);
+                                    //updateStatus("ACK " + filename);
                                 }
 
                                 System.out.println("ack sending to " + RequestFileActivity.this.toConnectDevice);
@@ -621,12 +626,12 @@ public class RequestFileActivity extends AppCompatActivity {
                                 if (pkt.isLast(
                                         WifiDirectBroadcastReceiver.mDevice.deviceName)) {
                                     sendFilePacket(pkt);
-                                    updateStatus("FILE " + filename);
+                                    //updateStatus("FILE " + filename);
                                 } else {
                                     pkt.incrPathPosition();
                                     RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
                                     RequestFileActivity.this.packet = pkt;
-                                    updateStatus("SEND " + filename);
+                                    //updateStatus("SEND " + filename);
                                 }
                                 break;
                             case FILE:
@@ -648,11 +653,11 @@ public class RequestFileActivity extends AppCompatActivity {
                                     RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
                                     RequestFileActivity.this.packet = pkt;
                                     RequestFileActivity.this.updateProgress();
-                                    updateStatus("FILE " + filename);
+                                    //updateStatus("FILE " + filename);
                                 }
                                 else {
                                     file = filename;
-                                    updateStatus("Downloading " + filename);
+                                    //updateStatus("Downloading " + filename);
                                 }
                                 break;
                             default:
@@ -845,7 +850,6 @@ public class RequestFileActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String results) {
-            //disconnect();
             if(RequestFileActivity.this.packet != null) {
                 mBroadcastHandler
                         .postDelayed(mServiceBroadcastingRunnable, 2000);
@@ -907,10 +911,6 @@ public class RequestFileActivity extends AppCompatActivity {
                 OutputStream outputStream = null;
 
                 try {
-                    if (packet == null) {
-                        Log.e("Server", "packet is null");
-                        throw new NoPacketException();
-                    }
 
                     serverSocket = new ServerSocket(8888);
                     client = serverSocket.accept();
@@ -953,9 +953,7 @@ public class RequestFileActivity extends AppCompatActivity {
 
                 /* ONLY FOR DEMO PURPOSES (ALSO ASSUMING ONLY SEND TO ONE PEER) */
                     RequestFileActivity.this.packet = null;
-
-                } catch (NoPacketException e) {
-                    Log.e("Request File", e.getMessage());
+                    
                 } catch (IOException e) {
                     Log.e("Request File", e.getMessage());
                 } finally {
