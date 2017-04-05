@@ -132,7 +132,7 @@ public class RequestFileActivity extends AppCompatActivity {
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
 
-        //registerReceiver(mReceiver, mIntentFilter);
+        registerReceiver(mReceiver, mIntentFilter);
         /**Handler to be used for performing delayed actions/runnable */
         mBroadcastHandler = new Handler();
 
@@ -154,7 +154,7 @@ public class RequestFileActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        registerReceiver(mReceiver, mIntentFilter);
+        //registerReceiver(mReceiver, mIntentFilter);
     }
 
     /**
@@ -163,7 +163,7 @@ public class RequestFileActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        unregisterReceiver(mReceiver);
+        //unregisterReceiver(mReceiver);
     }
 
     @Override
@@ -284,11 +284,6 @@ public class RequestFileActivity extends AppCompatActivity {
     public boolean containsFile(String filename) {
         MySQLLiteHelper db = MySQLLiteHelper.getHelper(this);
         return db.containsFile(filename);
-    }
-
-
-    public void updateStatus(String status) {
-        statusText = status;
     }
 
     public void updateUI() {
@@ -429,12 +424,12 @@ public class RequestFileActivity extends AppCompatActivity {
         protected String doInBackground(InetAddress[] params) {
             /* busy wait to get server hopefully running,
              * TODO: check if we can remove this and it still works */
-
+            unregisterReceiver(mReceiver);
             if(packet != null) {
                 Log.d("Client", "packet is supplied, should not be client");
             }
             else {
-                unregisterReceiver(mReceiver);
+                //unregisterReceiver(mReceiver);
 
                 System.out.println("client started");
 
@@ -464,7 +459,7 @@ public class RequestFileActivity extends AppCompatActivity {
                     //try connecting three times
                     boolean notConnected = true;
 
-                    for(int i  = 0; i < 10 && notConnected; i++) {
+                    for(int i  = 0; i < 1 && notConnected; i++) {
                         try {
                             socket.close();
                             socket = new Socket();
@@ -481,7 +476,7 @@ public class RequestFileActivity extends AppCompatActivity {
                     }
 
                     if(notConnected) {
-                        throw new IOException("didn't connect in five times");
+                        throw new IOException("didn't connect");
                     }
 
                     progress = "connected";
@@ -686,8 +681,10 @@ public class RequestFileActivity extends AppCompatActivity {
                     }
 
                 }
+                registerReceiver(mReceiver, mIntentFilter);
                 return file;
             }
+            registerReceiver(mReceiver, mIntentFilter);
             return null;
         }
 
@@ -870,12 +867,6 @@ public class RequestFileActivity extends AppCompatActivity {
                 context.startActivity(intent);
 
             }
-            else {
-                Context context = getApplicationContext();
-                Intent intent = new Intent(context, MainActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                context.startActivity(intent);
-            }
         }
 
     }
@@ -891,13 +882,13 @@ public class RequestFileActivity extends AppCompatActivity {
 
         @Override
         protected String doInBackground(Void... params) {
+            unregisterReceiver(mReceiver);
             if(RequestFileActivity.this.packet == null) {
                 Log.d("ServerAsyncTask", "no packet is supplied");
             }
             else {
                 System.out.println("server started");
                 context = getApplicationContext();
-                //unregisterReceiver(mReceiver);
 
                 /** Create a server socket and wait for client connections. This
                  * call blocks until a connection is accepted from a client
@@ -913,9 +904,6 @@ public class RequestFileActivity extends AppCompatActivity {
                     serverSocket = new ServerSocket(8888);
                     System.out.println("server accepting connections");
                     client = serverSocket.accept();
-
-                    if (Debug.isDebuggerConnected())
-                        Debug.waitForDebugger();
 
                     outputStream = client.getOutputStream();
 
@@ -965,6 +953,7 @@ public class RequestFileActivity extends AppCompatActivity {
                 } finally {
                     //registerReceiver(mReceiver, mIntentFilter);
                     RequestFileActivity.this.packet = null;
+                    disconnect();
 
                     if (client != null) {
                         try {
@@ -1008,17 +997,13 @@ public class RequestFileActivity extends AppCompatActivity {
                     });
                 }
             }
+            registerReceiver(mReceiver, mIntentFilter);
             return null;
         }
 
         @Override
         protected void onPostExecute(String results) {
-            disconnect();
             Context context = getApplicationContext();
-            Intent intent = new Intent(context, MainActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(intent);
-
         }
 
     }
