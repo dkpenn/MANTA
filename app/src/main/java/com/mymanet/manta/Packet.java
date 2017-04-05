@@ -1,5 +1,7 @@
 package com.mymanet.manta;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -105,6 +107,32 @@ class Packet {
         out.println(timeToLive + "");
         out.println(pathToString());
         out.println(pathPosition + "");
+    }
+
+    void packetToStream(OutputStream out, String type) {
+        try {
+            String newline = "\n";
+            out.write(type.getBytes("UTF-8"));
+            out.write(newline.getBytes("UTF-8"));
+
+            out.write(src.getBytes("UTF-8"));
+            out.write(newline.getBytes("UTF-8"));
+
+            out.write(filename.getBytes("UTF-8"));
+            out.write(newline.getBytes("UTF-8"));
+
+            out.write((timeToLive + "").getBytes("UTF-8"));
+            out.write(newline.getBytes("UTF-8"));
+
+            out.write(pathToString().getBytes("UTF-8"));
+            out.write(newline.getBytes("UTF-8"));
+
+            out.write((pathPosition + "").getBytes("UTF-8"));
+            out.write(newline.getBytes("UTF-8"));
+
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private List<String> toListOfNodes(String path) {

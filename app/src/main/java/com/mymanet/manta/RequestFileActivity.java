@@ -62,11 +62,6 @@ public class RequestFileActivity extends AppCompatActivity {
     String toConnectDevice;
     Packet packet;
     Handler mBroadcastHandler;
-    Timer timer;
-
-    //int progress;
-    //private ProgressBar mProgress;
-    //int progressDiff;
 
     String statusText;
     private TextView mStatus;
@@ -80,32 +75,9 @@ public class RequestFileActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        //mProgress = (ProgressBar) findViewById(R.id.progressBar5);
-        //mProgress.setProgress(0);
-//        mProgress.setVisibility(View.GONE);
-        Bundle extras = getIntent().getExtras();
-        if (savedInstanceState == null) {
-//            if (extras != null) {
-//                progress = extras.getInt("progress");
-//                statusText = extras.getString("status");
-//            } else {
-            //progress = 0;
-            statusText = null;
-//            }
-        } else {
-            //progress = savedInstanceState.getInt("progress");
-            statusText = savedInstanceState.getString("status");
-        }
-        //progressDiff = mProgress.getMax() / 2;
-
         mStatus = (TextView) findViewById(R.id.status);
-//        mStatus.setVisibility(View.GONE);
 
         updateUI();
-
-        // update UI every 10 seconds
-//        timer = new Timer();
-//        timer.schedule(new updateUI(), 10000);
 
         packet = null;
 
@@ -160,9 +132,9 @@ public class RequestFileActivity extends AppCompatActivity {
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
 
+        //registerReceiver(mReceiver, mIntentFilter);
         /**Handler to be used for performing delayed actions/runnable */
         mBroadcastHandler = new Handler();
-        //mBroadcastHandler.postDelayed(mServiceBroadcastingRunnable, 1000);
 
     }
 
@@ -182,11 +154,6 @@ public class RequestFileActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        Bundle extras = getIntent().getExtras();
-        if (extras != null) {
-            //this.progress = extras.getInt("progress");
-            this.statusText = extras.getString("status");
-        }
         registerReceiver(mReceiver, mIntentFilter);
     }
 
@@ -196,17 +163,11 @@ public class RequestFileActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        //getIntent().putExtra("progress", progress);
-        getIntent().putExtra("status", String.valueOf(statusText));
         unregisterReceiver(mReceiver);
     }
 
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
-        //getIntent().putExtra("progress", progress);
-        getIntent().putExtra("status", String.valueOf(statusText));
-        //savedInstanceState.putInt("progress", progress);
-        savedInstanceState.putString("status", String.valueOf(statusText));
         super.onSaveInstanceState(savedInstanceState);
     }
 
@@ -227,15 +188,6 @@ public class RequestFileActivity extends AppCompatActivity {
     private Runnable mServiceBroadcastingRunnable = new Runnable() {
         @Override
         public void run() {
-//            mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
-//                @Override
-//                public void onSuccess() {
-//                }
-//
-//                @Override
-//                public void onFailure(int error) {
-//                }
-//            });
             lookForPeers();
         }
     };
@@ -298,7 +250,6 @@ public class RequestFileActivity extends AppCompatActivity {
      */
     public void requestByFilename(View view) {
         String filename = mEdit.getText().toString();
-        //mProgress.setVisibility(View.VISIBLE);
 
         // if file exists locally, terminate request
         if (containsFile(filename)) {
@@ -335,12 +286,6 @@ public class RequestFileActivity extends AppCompatActivity {
         return db.containsFile(filename);
     }
 
-//    public void updateProgress() {
-//        int newProgress = progress + progressDiff;
-//        if (newProgress < mProgress.getMax()) {
-//            progress = newProgress;
-//        }
-//    }
 
     public void updateStatus(String status) {
         statusText = status;
@@ -352,16 +297,11 @@ public class RequestFileActivity extends AppCompatActivity {
         if (statusText != null) {
 
             mStatus.setText(statusText);
-//            mStatus.setVisibility(View.VISIBLE);
             statusText = null;
         }
         else {
             mStatus.setText("");
         }
-
-//        if (progress != mProgress.getProgress()) {
-//            mProgress.setProgress(progress);
-//        }
     }
 
 
@@ -489,10 +429,13 @@ public class RequestFileActivity extends AppCompatActivity {
         protected String doInBackground(InetAddress[] params) {
             /* busy wait to get server hopefully running,
              * TODO: check if we can remove this and it still works */
+
             if(packet != null) {
                 Log.d("Client", "packet is supplied, should not be client");
             }
             else {
+                unregisterReceiver(mReceiver);
+
                 System.out.println("client started");
 
                 for(int i = 0; i < 10000; i++) {
@@ -503,19 +446,13 @@ public class RequestFileActivity extends AppCompatActivity {
 
                 InetAddress groupOwnerAddress = params[0];
                 int port = 8888;
-                //int len; //apparently not used so removed
                 Socket socket = new Socket();
-                //byte[] buf = new byte[1024]; //also apparently not used, so removed
 
                 OutputStream outputStream = null;
                 InputStream inputStream = null;
                 InputStream fileInputStream = null;
                 PrintWriter out = null;
                 String file = null;
-
-                            /*debugger*/
-                if (Debug.isDebuggerConnected())
-                    Debug.waitForDebugger();
 
                 try {
                     /** Create a client socket with the host, port and timeout information
@@ -525,79 +462,27 @@ public class RequestFileActivity extends AppCompatActivity {
 
                 /*changed timeout to 5500ms so connection has time to happen */
                     //try connecting three times
-                    try {
-                        socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 30000);
-                    } catch (SocketTimeoutException e) {
-                        Log.e("client connection", "fail to make connection with server");
-                        e.printStackTrace();
-                        for(int i = 0; i < 3000; i++) {
-                            System.out.print("");
-                        }
+                    boolean notConnected = true;
+
+                    for(int i  = 0; i < 10 && notConnected; i++) {
                         try {
                             socket.close();
                             socket = new Socket();
                             socket.bind(null);
-                            socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 30000);
-                        } catch(SocketTimeoutException e1) {
-                            for(int i = 0; i < 3000; i++) {
-                                System.out.print("");
-                            }
+                            socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 5000);
+                            notConnected = false;
+                        } catch (SocketTimeoutException e) {
                             Log.e("client connection", "fail to make connection with server");
-                            e1.printStackTrace();
-                            socket.close();
-                            socket = new Socket();
-                            socket.bind(null);
-                            socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 30000);
-                        }
-                        catch(IOException e1) {
-                            for(int i = 0; i < 3000; i++) {
-                                System.out.print("");
-                            }
-                            Log.e("client connection", "fail to make connection with server");
-                            e1.printStackTrace();
-                            socket.close();
-                            socket = new Socket();
-                            socket.bind(null);
-                            socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 30000);
-                        }
-                    } catch (IOException e) {
-                        for(int i = 0; i < 3000; i++) {
-                            System.out.print("");
-                        }
-                        Log.e("client connection", "fail to make connection with server");
-                        e.printStackTrace();
-                        socket.close();
-                        socket = new Socket();
-                        socket.bind(null);
-                        try {
-                            socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 30000);
-                        } catch(SocketTimeoutException e1) {
-                            for(int i = 0; i < 3000; i++) {
-                                System.out.print("");
-                            }
-                            Log.e("client connection", "fail to make connection with server");
-                            e1.printStackTrace();
-                            socket.close();
-                            socket = new Socket();
-                            socket.bind(null);
-                            socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 30000);
-                        }
-                        catch(IOException e1) {
-                            for(int i = 0; i < 3000; i++) {
-                                System.out.print("");
-                            }
-                            Log.e("client connection", "fail to make connection with server");
-                            e1.printStackTrace();
-                            socket.close();
-                            socket = new Socket();
-                            socket.bind(null);
-                            socket.connect((new InetSocketAddress(groupOwnerAddress, port)), 30000);
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            Log.e("error connecting" , e.getMessage());
+                            e.printStackTrace();
                         }
                     }
 
-                /*debugger*/
-                    if (Debug.isDebuggerConnected())
-                        Debug.waitForDebugger();
+                    if(notConnected) {
+                        throw new IOException("didn't connect in five times");
+                    }
 
                     progress = "connected";
 
@@ -666,9 +551,7 @@ public class RequestFileActivity extends AppCompatActivity {
                                             filename);
                                     //change packet to ACK
                                     sendAck(pkt);
-                                    //updateStatus("ACK " + filename);
                                 } else {
-                                    //updateStatus("REQUEST " + filename);
                                     progress = "to broadcast packet";
                                     broadcastRequest(pkt);
                                 }
@@ -687,9 +570,7 @@ public class RequestFileActivity extends AppCompatActivity {
                                 // if the ack has reached the requester, send a request for the file itself
                                 // otherwise continue
                                 if (WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
-                                    //RequestFileActivity.this.updateProgress();
                                     sendSend(pkt);
-                                    //updateStatus("SEND " + filename);
                                 } else {
                                     pkt.decrPathPosition();
                                     RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
@@ -697,7 +578,6 @@ public class RequestFileActivity extends AppCompatActivity {
                                     final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
                                     db.updateStatusMessage("SEND ACK for " + filename);
                                     uiHandler.sendEmptyMessage(0);
-                                    //updateStatus("ACK " + filename);
                                 }
 
                                 System.out.println("ack sending to " + RequestFileActivity.this.toConnectDevice);
@@ -717,8 +597,6 @@ public class RequestFileActivity extends AppCompatActivity {
                                 if (pkt.isLast(
                                         WifiDirectBroadcastReceiver.mDevice.deviceName)) {
                                     sendFilePacket(pkt);
-
-                                    //updateStatus("FILE " + filename);
                                 } else {
                                     pkt.incrPathPosition();
                                     RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
@@ -726,7 +604,6 @@ public class RequestFileActivity extends AppCompatActivity {
                                     final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
                                     db.updateStatusMessage("SEND SEND for " + filename);
                                     uiHandler.sendEmptyMessage(0);
-                                    //updateStatus("SEND " + filename);
                                 }
                                 break;
                             case FILE:
@@ -749,18 +626,15 @@ public class RequestFileActivity extends AppCompatActivity {
                                     pkt.decrPathPosition();
                                     RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
                                     RequestFileActivity.this.packet = pkt;
-                                    //RequestFileActivity.this.updateProgress();
                                     final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
                                     db.updateStatusMessage("SEND FILE for " + filename);
                                     uiHandler.sendEmptyMessage(0);
-                                    //updateStatus("FILE " + filename);
                                 }
                                 else {
                                     file = filename;
                                     final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
                                     db.updateStatusMessage("Downloading " + filename);
                                     uiHandler.sendEmptyMessage(0);
-                                    //updateStatus("Downloading " + filename);
                                 }
                                 break;
                             default:
@@ -778,6 +652,9 @@ public class RequestFileActivity extends AppCompatActivity {
                 } catch (NumberFormatException e) {
                     Log.e("request file ", e.getMessage());
                 } finally {
+                    System.out.println("leaving client task");
+                    //registerReceiver(mReceiver, mIntentFilter);
+
                     if (outputStream != null) {
                         try {
                             outputStream.close();
@@ -890,8 +767,6 @@ public class RequestFileActivity extends AppCompatActivity {
                 RequestFileActivity.this.packet = pkt;
                 RequestFileActivity.this.toConnectDevice = node;
 
-//                mBroadcastHandler
-//                        .postDelayed(mServiceBroadcastingRunnable, 4000);
 
             } else {
                 //ignore this
@@ -918,8 +793,7 @@ public class RequestFileActivity extends AppCompatActivity {
 
                 RequestFileActivity.this.packet = pkt;
                 RequestFileActivity.this.toConnectDevice = node;
-//                mBroadcastHandler
-//                        .postDelayed(mServiceBroadcastingRunnable, 2000);
+
             } else {
                 //ignore the acknowledgement
                 RequestFileActivity.this.packet = null;
@@ -943,8 +817,6 @@ public class RequestFileActivity extends AppCompatActivity {
 
                 RequestFileActivity.this.toConnectDevice = node;
                 RequestFileActivity.this.packet = pkt;
-//                mBroadcastHandler
-//                        .postDelayed(mServiceBroadcastingRunnable, 2000);
             } else {
                 //ignore if not in right state
                 RequestFileActivity.this.packet = null;
@@ -1025,6 +897,7 @@ public class RequestFileActivity extends AppCompatActivity {
             else {
                 System.out.println("server started");
                 context = getApplicationContext();
+                //unregisterReceiver(mReceiver);
 
                 /** Create a server socket and wait for client connections. This
                  * call blocks until a connection is accepted from a client
@@ -1045,21 +918,23 @@ public class RequestFileActivity extends AppCompatActivity {
                         Debug.waitForDebugger();
 
                     outputStream = client.getOutputStream();
-                    out = new PrintWriter(outputStream, true);
 
                     // send packet data to connected device
                     switch (packet.getPacketType()) {
                         case REQUEST:
+                            out = new PrintWriter(outputStream, true);
                             packet.packetToStream(out, "1");
                             break;
                         case ACK:
+                            out = new PrintWriter(outputStream, true);
                             packet.packetToStream(out, "2");
                             break;
                         case SEND:
+                            out = new PrintWriter(outputStream, true);
                             packet.packetToStream(out, "3");
                             break;
                         case FILE:
-                            packet.packetToStream(out, "4");
+                            packet.packetToStream(outputStream, "4");
                             File picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
                             String path = "file:////" + picturesDir.getAbsolutePath() + "/" + packet.getFilename();
                             ContentResolver cr = context.getContentResolver();
@@ -1068,10 +943,10 @@ public class RequestFileActivity extends AppCompatActivity {
                             InputStream fileInputStream = cr.openInputStream(Uri.parse(path));
                             System.out.println("start sending file");
                             while ((len = fileInputStream.read(buf)) != -1) {
+                                System.out.println("sending..");
                                 outputStream.write(buf, 0, len);
                                 outputStream.flush();
                             }
-                            outputStream.flush();
                             outputStream.close();
                             System.out.println("finish sending file");
                         default:
@@ -1088,6 +963,7 @@ public class RequestFileActivity extends AppCompatActivity {
                 } catch (IOException e) {
                     Log.e("Request File", e.getMessage());
                 } finally {
+                    //registerReceiver(mReceiver, mIntentFilter);
                     RequestFileActivity.this.packet = null;
 
                     if (client != null) {
