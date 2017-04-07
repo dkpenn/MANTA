@@ -271,7 +271,7 @@ public class RequestFileActivity extends AppCompatActivity {
         db.updateStatusMessage("Send REQUEST " + filename);
         updateUI();
         //change screens
-        setContentView(R.layout.activity_propagate_request);
+        //setContentView(R.layout.activity_propagate_request);
 
         lookForPeers();
     }
