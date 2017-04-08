@@ -276,29 +276,33 @@ public class RequestFileActivity extends AppCompatActivity {
     /**
      *
      */
-    public void startScanning(View view) {
-        scanning = true;
-        //scan once
-        mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
+    public void scan(View view) {
 
-            @Override
-            public void onSuccess() {
-                Log.d("Discovery Succeeded", "scan for peers button");
-            }
+        if(scanning) {
+            scanning = false;
+        }
+        else {
+            scanning = true;
+            //scan once
+            mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
 
-            @Override
-            public void onFailure(int i) {
-                Log.d("Discovery Failure", "reason " + i);
-            }
-        });
+                @Override
+                public void onSuccess() {
+                    Log.d("Discovery Succeeded", "scan for peers button");
+                }
 
-        //scan again after 5 seconds
-        mScanningHandler.postDelayed(mServiceScannningRunnable, 5000);
+                @Override
+                public void onFailure(int i) {
+                    Log.d("Discovery Failure", "reason " + i);
+                }
+            });
+
+            //scan again after 5 seconds
+            mScanningHandler.postDelayed(mServiceScannningRunnable, 5000);
+        }
     }
 
-    public void stopScanning(View view) {
-        scanning = false;
-    }
+
 
     /**
      * When user clicks to request a file, broadcast request for file to
