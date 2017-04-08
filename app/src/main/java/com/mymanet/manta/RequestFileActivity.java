@@ -62,9 +62,12 @@ public class RequestFileActivity extends AppCompatActivity {
     String toConnectDevice;
     Packet packet;
     Handler mBroadcastHandler;
+    Handler mScanningHandler;
 
     String statusText;
     private TextView mStatus;
+
+    boolean scanning = false;
 
 
     @Override
@@ -135,6 +138,7 @@ public class RequestFileActivity extends AppCompatActivity {
         registerReceiver(mReceiver, mIntentFilter);
         /**Handler to be used for performing delayed actions/runnable */
         mBroadcastHandler = new Handler();
+        mScanningHandler = new Handler();
 
     }
 
@@ -192,6 +196,32 @@ public class RequestFileActivity extends AppCompatActivity {
         }
     };
 
+    /**
+     *  runnable instance of lookForPeers so it can be done with a delay
+     *  https://stackoverflow.com/questions/26300889/wifi-p2p-service-discovery-works-intermittently
+     */
+    private Runnable mServiceScannningRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if(scanning) {
+                mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
+
+                    @Override
+                    public void onSuccess() {
+                        Log.d("Discovery Succeeded", "scan for peers button");
+                    }
+
+                    @Override
+                    public void onFailure(int i) {
+                        Log.d("Discovery Failure", "reason " + i);
+                    }
+                });
+            }
+
+            mScanningHandler.postDelayed(mServiceScannningRunnable, 5000);
+        }
+    };
+
     /***
      * Action taken by the device acting as the server in the connection
      * @param wifiP2pInfo
@@ -241,6 +271,33 @@ public class RequestFileActivity extends AppCompatActivity {
                 Log.d("Discovery Failure", "reason " + i);
             }
         });
+    }
+
+    /**
+     *
+     */
+    public void startScanning(View view) {
+        scanning = true;
+        //scan once
+        mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
+
+            @Override
+            public void onSuccess() {
+                Log.d("Discovery Succeeded", "scan for peers button");
+            }
+
+            @Override
+            public void onFailure(int i) {
+                Log.d("Discovery Failure", "reason " + i);
+            }
+        });
+
+        //scan again after 5 seconds
+        mScanningHandler.postDelayed(mServiceScannningRunnable, 5000);
+    }
+
+    public void stopScanning(View view) {
+        scanning = false;
     }
 
     /**
@@ -419,12 +476,20 @@ public class RequestFileActivity extends AppCompatActivity {
 
         private Context context;
         private CharSequence progress = "not connected";
+        boolean prevScanningState = false;
 
         @Override
         protected String doInBackground(InetAddress[] params) {
             /* busy wait to get server hopefully running,
              * TODO: check if we can remove this and it still works */
+
+            //store scanning state before this was called
+            prevScanningState = scanning;
+            scanning = false;
+
+            //unregister broadcast receiver
             unregisterReceiver(mReceiver);
+
             if(packet != null) {
                 Log.d("Client", "packet is supplied, should not be client");
             }
@@ -681,9 +746,14 @@ public class RequestFileActivity extends AppCompatActivity {
                     }
 
                 }
+                scanning = prevScanningState;
                 registerReceiver(mReceiver, mIntentFilter);
+
                 return file;
             }
+
+            //restore scanning state
+            scanning = prevScanningState;
             registerReceiver(mReceiver, mIntentFilter);
             return null;
         }
@@ -726,6 +796,7 @@ public class RequestFileActivity extends AppCompatActivity {
 
                 System.out.println("BROADCAST: changed peer to connect to to be Pia");
 
+                // TODO: remove this and see what happens (is it faster or slower)
                 mBroadcastHandler
                         .postDelayed(mServiceBroadcastingRunnable, 2000);
 
@@ -770,7 +841,6 @@ public class RequestFileActivity extends AppCompatActivity {
                 RequestFileActivity.this.packet = null;
             }
 
-
         }
 
         /**
@@ -795,6 +865,7 @@ public class RequestFileActivity extends AppCompatActivity {
                 //ignore the acknowledgement
                 RequestFileActivity.this.packet = null;
             }
+
         }
 
         /**
@@ -818,6 +889,7 @@ public class RequestFileActivity extends AppCompatActivity {
                 //ignore if not in right state
                 RequestFileActivity.this.packet = null;
             }
+
         }
 
         /**
@@ -867,6 +939,13 @@ public class RequestFileActivity extends AppCompatActivity {
                 context.startActivity(intent);
 
             }
+            else {
+                //restore scanning state
+                // start scanning again
+                if(prevScanningState) {
+                    mScanningHandler.postDelayed(mServiceScannningRunnable, 2000);
+                }
+            }
         }
 
     }
@@ -879,10 +958,17 @@ public class RequestFileActivity extends AppCompatActivity {
     class OFileServerAsyncTask extends AsyncTask<Void, Void, String> {
 
         private Context context;
+        boolean prevScanningState = false;
 
         @Override
         protected String doInBackground(Void... params) {
             unregisterReceiver(mReceiver);
+
+            //turn of scanning for async task
+            prevScanningState = scanning;
+            scanning = false;
+
+
             if(RequestFileActivity.this.packet == null) {
                 Log.d("ServerAsyncTask", "no packet is supplied");
             }
@@ -984,20 +1070,25 @@ public class RequestFileActivity extends AppCompatActivity {
                         out.close();
                     }
                 /* Stop Peer discovery if it is still going */
-                    mManager.stopPeerDiscovery(mChannel, new WifiP2pManager.ActionListener() {
-                        @Override
-                        public void onSuccess() {
-                            Log.d("wifi p2p", "stop peer discovery");
-                        }
-
-                        @Override
-                        public void onFailure(int i) {
-                            Log.d("wifi p2p", "not stop peer discovery");
-                        }
-                    });
+//                    mManager.stopPeerDiscovery(mChannel, new WifiP2pManager.ActionListener() {
+//                        @Override
+//                        public void onSuccess() {
+//                            Log.d("wifi p2p", "stop peer discovery");
+//                        }
+//
+//                        @Override
+//                        public void onFailure(int i) {
+//                            Log.d("wifi p2p", "not stop peer discovery");
+//                        }
+//                    });
                 }
             }
             registerReceiver(mReceiver, mIntentFilter);
+            // after server start scanning again
+            if(prevScanningState) {
+                scanning = prevScanningState;
+                mScanningHandler.postDelayed(mServiceScannningRunnable, 2000);
+            }
             return null;
         }
 
