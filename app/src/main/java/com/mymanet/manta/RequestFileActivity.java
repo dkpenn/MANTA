@@ -14,7 +14,6 @@ import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Debug;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
@@ -26,16 +25,13 @@ import android.webkit.MimeTypeMap;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
-import java.io.BufferedReader;
+
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.InetAddress;
@@ -45,8 +41,6 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class RequestFileActivity extends AppCompatActivity {
 
@@ -63,6 +57,8 @@ public class RequestFileActivity extends AppCompatActivity {
     Packet packet;
     Handler mBroadcastHandler;
     Handler mScanningHandler;
+    ProgressBar mprogress;
+    boolean progressVisible;
 
     String statusText;
     private TextView mStatus;
@@ -79,6 +75,9 @@ public class RequestFileActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         mStatus = (TextView) findViewById(R.id.status);
+        mprogress = (ProgressBar) findViewById(R.id.progressBar);
+        mprogress.setVisibility(View.INVISIBLE);
+        progressVisible = false;
 
         updateUI();
 
@@ -217,7 +216,7 @@ public class RequestFileActivity extends AppCompatActivity {
                     }
                 });
             }
-
+            // TODO maybe this should be in the loop?
             mScanningHandler.postDelayed(mServiceScannningRunnable, 5000);
         }
     };
@@ -334,6 +333,7 @@ public class RequestFileActivity extends AppCompatActivity {
         //change screens
         //setContentView(R.layout.activity_propagate_request);
 
+        mprogress.setVisibility(View.VISIBLE);
         lookForPeers();
     }
 
@@ -357,6 +357,12 @@ public class RequestFileActivity extends AppCompatActivity {
         }
         else {
             mStatus.setText("");
+        }
+
+        if (progressVisible) {
+            mprogress.setVisibility(View.VISIBLE);
+        } else {
+            mprogress.setVisibility(View.INVISIBLE);
         }
     }
 
@@ -490,6 +496,7 @@ public class RequestFileActivity extends AppCompatActivity {
             //store scanning state before this was called
             prevScanningState = scanning;
             scanning = false;
+            progressVisible = true;
 
             //unregister broadcast receiver
             unregisterReceiver(mReceiver);
@@ -607,68 +614,19 @@ public class RequestFileActivity extends AppCompatActivity {
                                 // if the request has reached a fileowner, unicast this back along the path
                                 // otherwise, broadcast request to other peers
                                 if (containsFile(filename)) {
-                                    progress = "send ack pack";
+                                    progress = "send file pack";
                                     System.out.println("to connect device: " +
                                             RequestFileActivity.this.toConnectDevice + "\nsrc: " + srcDevice);
 
                                     System.out.println("found file: " +
                                             filename);
                                     //change packet to ACK
-                                    sendAck(pkt);
+                                    sendFilePacket(pkt);
                                 } else {
                                     progress = "to broadcast packet";
                                     broadcastRequest(pkt);
                                 }
 
-                                break;
-                            case ACK:
-
-                                System.out.println("ack packet for: " + filename + " from: " + srcDevice);
-                                progress = "received packet";
-                                statusText = "Received ack packet for: " + filename + " from: " + srcDevice;
-                                if(true) {
-                                    final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
-                                    db.updateStatusMessage(statusText);
-                                    uiHandler.sendEmptyMessage(0);
-                                }
-                                // if the ack has reached the requester, send a request for the file itself
-                                // otherwise continue
-                                if (WifiDirectBroadcastReceiver.mDevice.deviceName.equals(srcDevice)) {
-                                    sendSend(pkt);
-                                } else {
-                                    pkt.decrPathPosition();
-                                    RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
-                                    RequestFileActivity.this.packet = pkt;
-                                    final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
-                                    db.updateStatusMessage("SEND ACK for " + filename);
-                                    uiHandler.sendEmptyMessage(0);
-                                }
-
-                                System.out.println("ack sending to " + RequestFileActivity.this.toConnectDevice);
-
-                                break;
-                            case SEND:
-
-                                System.out.println("send packet for: " + filename + " from: " + srcDevice);
-                                progress = "received packet";
-                                statusText = "Received send packet for: " + filename + " from: " + srcDevice;
-                                if(true) {
-                                    final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
-                                    db.updateStatusMessage(statusText);
-                                    uiHandler.sendEmptyMessage(0);
-                                }
-                                // if fileowner has been reached, send the file back
-                                if (pkt.isLast(
-                                        WifiDirectBroadcastReceiver.mDevice.deviceName)) {
-                                    sendFilePacket(pkt);
-                                } else {
-                                    pkt.incrPathPosition();
-                                    RequestFileActivity.this.toConnectDevice = pkt.getNodeAtPathPosition();
-                                    RequestFileActivity.this.packet = pkt;
-                                    final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
-                                    db.updateStatusMessage("SEND SEND for " + filename);
-                                    uiHandler.sendEmptyMessage(0);
-                                }
                                 break;
                             case FILE:
 
@@ -750,6 +708,7 @@ public class RequestFileActivity extends AppCompatActivity {
                     }
 
                 }
+                RequestFileActivity.this.progressVisible = false;
                 scanning = prevScanningState;
                 registerReceiver(mReceiver, mIntentFilter);
 
@@ -971,6 +930,7 @@ public class RequestFileActivity extends AppCompatActivity {
             //turn of scanning for async task
             prevScanningState = scanning;
             scanning = false;
+            progressVisible = true;
 
 
             if(RequestFileActivity.this.packet == null) {
@@ -1004,14 +964,6 @@ public class RequestFileActivity extends AppCompatActivity {
                             packet.packetToStream(out, "1");
                             break;
                         case ACK:
-                            out = new PrintWriter(outputStream, true);
-                            packet.packetToStream(out, "2");
-                            break;
-                        case SEND:
-                            out = new PrintWriter(outputStream, true);
-                            packet.packetToStream(out, "3");
-                            break;
-                        case FILE:
                             packet.packetToStream(outputStream, "4");
                             File picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
                             String path = "file:////" + picturesDir.getAbsolutePath() + "/" + packet.getFilename();
@@ -1088,6 +1040,7 @@ public class RequestFileActivity extends AppCompatActivity {
                 }
             }
             registerReceiver(mReceiver, mIntentFilter);
+            progressVisible = false;
             // after server start scanning again
             if(prevScanningState) {
                 scanning = prevScanningState;
