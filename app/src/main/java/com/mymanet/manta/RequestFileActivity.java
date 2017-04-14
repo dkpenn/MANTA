@@ -217,9 +217,10 @@ public class RequestFileActivity extends AppCompatActivity {
                         Log.d("Discovery Failure", "reason " + i);
                     }
                 });
+
+                mScanningHandler.postDelayed(mServiceScannningRunnable, 5000);
             }
             // TODO maybe this should be in the loop?
-            mScanningHandler.postDelayed(mServiceScannningRunnable, 5000);
         }
     };
 
