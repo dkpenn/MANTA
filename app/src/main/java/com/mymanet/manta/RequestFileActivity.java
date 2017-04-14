@@ -157,7 +157,7 @@ public class RequestFileActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        //registerReceiver(mReceiver, mIntentFilter);
+//        registerReceiver(mReceiver, mIntentFilter);
     }
 
     /**
@@ -166,7 +166,7 @@ public class RequestFileActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        //unregisterReceiver(mReceiver);
+//        unregisterReceiver(mReceiver);
     }
 
     @Override
@@ -177,11 +177,13 @@ public class RequestFileActivity extends AppCompatActivity {
     @Override
     public void onStart() {
         super.onStart();
+//        registerReceiver(mReceiver, mIntentFilter);
     }
 
     @Override
     public void onStop() {
         super.onStop();
+//        unregisterReceiver(mReceiver);
     }
 
     /**
@@ -505,7 +507,7 @@ public class RequestFileActivity extends AppCompatActivity {
                 Log.d("Client", "packet is supplied, should not be client");
             }
             else {
-                //unregisterReceiver(mReceiver);
+//                unregisterReceiver(mReceiver);
 
                 System.out.println("client started");
 
@@ -620,7 +622,7 @@ public class RequestFileActivity extends AppCompatActivity {
 
                                     System.out.println("found file: " +
                                             filename);
-                                    //change packet to ACK
+                                    // change to sending file packet
                                     sendFilePacket(pkt);
                                 } else {
                                     progress = "to broadcast packet";
@@ -963,7 +965,7 @@ public class RequestFileActivity extends AppCompatActivity {
                             out = new PrintWriter(outputStream, true);
                             packet.packetToStream(out, "1");
                             break;
-                        case ACK:
+                        case FILE:
                             packet.packetToStream(outputStream, "4");
                             File picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
                             String path = "file:////" + picturesDir.getAbsolutePath() + "/" + packet.getFilename();
