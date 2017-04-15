@@ -59,6 +59,7 @@ public class RequestFileActivity extends AppCompatActivity {
     Handler mScanningHandler;
     ProgressBar mprogress;
     boolean progressVisible;
+    boolean prevScanningState;
 
     String statusText;
     private TextView mStatus;
@@ -108,7 +109,8 @@ public class RequestFileActivity extends AppCompatActivity {
         mConnectionInfoListener = new WifiP2pManager.ConnectionInfoListener() {
             @Override
             public void onConnectionInfoAvailable(WifiP2pInfo wifiP2pInfo) {
-
+                prevScanningState = scanning;
+                scanning = false;
                 //if not group owner, start the client
                 if (!wifiP2pInfo.isGroupOwner) {
                     startClient(wifiP2pInfo);
@@ -218,7 +220,7 @@ public class RequestFileActivity extends AppCompatActivity {
                     }
                 });
 
-                mScanningHandler.postDelayed(mServiceScannningRunnable, 5000);
+                mScanningHandler.postDelayed(mServiceScannningRunnable, 10000);
             }
             // TODO maybe this should be in the loop?
         }
@@ -300,7 +302,7 @@ public class RequestFileActivity extends AppCompatActivity {
             });
 
             //scan again after 5 seconds
-            mScanningHandler.postDelayed(mServiceScannningRunnable, 5000);
+            mScanningHandler.postDelayed(mServiceScannningRunnable, 7000);
         }
     }
 
@@ -497,8 +499,8 @@ public class RequestFileActivity extends AppCompatActivity {
              * TODO: check if we can remove this and it still works */
 
             //store scanning state before this was called
-            prevScanningState = scanning;
-            scanning = false;
+            //prevScanningState = scanning;
+            //scanning = false;
             progressVisible = true;
 
             //unregister broadcast receiver
@@ -712,14 +714,14 @@ public class RequestFileActivity extends AppCompatActivity {
 
                 }
                 RequestFileActivity.this.progressVisible = false;
-                scanning = prevScanningState;
+                //scanning = prevScanningState;
                 registerReceiver(mReceiver, mIntentFilter);
 
                 return file;
             }
 
             //restore scanning state
-            scanning = prevScanningState;
+            //scanning = prevScanningState;
             registerReceiver(mReceiver, mIntentFilter);
             return null;
         }
@@ -764,7 +766,7 @@ public class RequestFileActivity extends AppCompatActivity {
 
                 // TODO: remove this and see what happens (is it faster or slower)
                 mBroadcastHandler
-                        .postDelayed(mServiceBroadcastingRunnable, 2000);
+                        .postDelayed(mServiceBroadcastingRunnable, 5000);
 
             } else {
                 //stop processing packet (ignore)
@@ -843,8 +845,8 @@ public class RequestFileActivity extends AppCompatActivity {
 
             final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
 
-            if (db.responseHasStatus(pkt.getFilename(), pkt.getSrc(), 0)) {
-                db.updateResponse(pkt.getFilename(), pkt.getSrc(), 1);
+            if(!db.responseExists(pkt.getFilename(), pkt.getSrc())) {
+                db.addResponse(pkt.getFilename(), pkt.getSrc());
                 db.updateStatusMessage("SEND FILE for " + pkt.getFilename() + " for " + pkt.getSrc());
                 uiHandler.sendEmptyMessage(0);
                 String node = pkt.getNodeAtPathPosition();
@@ -886,7 +888,7 @@ public class RequestFileActivity extends AppCompatActivity {
         protected void onPostExecute(String results) {
             if(RequestFileActivity.this.packet != null) {
                 mBroadcastHandler
-                        .postDelayed(mServiceBroadcastingRunnable, 2000);
+                        .postDelayed(mServiceBroadcastingRunnable, 1000);
             }
             else if (results != null) {
                 Context context = getApplicationContext();
@@ -924,14 +926,14 @@ public class RequestFileActivity extends AppCompatActivity {
     class OFileServerAsyncTask extends AsyncTask<Void, Void, String> {
 
         private Context context;
-        boolean prevScanningState = false;
+        //boolean prevScanningState = false;
 
         @Override
         protected String doInBackground(Void... params) {
             unregisterReceiver(mReceiver);
 
             //turn of scanning for async task
-            prevScanningState = scanning;
+            //prevScanningState = scanning;
             scanning = false;
             progressVisible = true;
 
