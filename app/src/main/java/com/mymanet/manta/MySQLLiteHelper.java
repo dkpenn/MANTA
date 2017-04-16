@@ -401,6 +401,26 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
         Log.d("deleteAllRequests", "deleted everything");
 
     }
+
+    public void deleteRequest(String request) {
+
+        // 1. get reference to writable DB
+        SQLiteDatabase db = this.getWritableDatabase();
+        //db.beginTransaction();
+
+        // 2. delete
+        db.delete(TABLE_REQUEST,
+                COLUMN_FILENAME + " = ?",
+                new String[]{request});
+
+        // 3. close
+        //db.endTransaction();
+        //db.close();
+
+        Log.d("deleteFile", request.toString());
+
+    }
+
     // **** RESPONSE TABLE FUNCTIONS ****
 
     /**
@@ -503,6 +523,25 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
 
     }
 
+    public void deleteResponseWithFileName(String response) {
+
+        // 1. get reference to writable DB
+        SQLiteDatabase db = this.getWritableDatabase();
+        //db.beginTransaction();
+
+        // 2. delete
+        db.delete(TABLE_RESPONSE,
+                COLUMN_FILENAME + " = ?",
+                new String[]{response});
+
+        // 3. close
+        //db.endTransaction();
+        //db.close();
+
+        Log.d("deleteResponseWithFileName", response.toString());
+
+    }
+
     // **** FILTER TABLE FUNCTIONS ****
 
     /**
@@ -566,6 +605,29 @@ class MySQLLiteHelper extends SQLiteOpenHelper {
     }
 
     // **** TRUSTED TABLE FUNCTIONS ****
+
+    /**
+     * Record new request made
+     */
+    void addPeer(String peer) {
+        String query = "INSERT INTO " + TABLE_TRUSTED + " (" + COLUMN_DEVICE +
+                ") VALUES " + "(\"" + peer + "\");";
+
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        //db.beginTransaction();
+
+        try {
+            db.execSQL(query);
+
+        } catch (android.database.sqlite.SQLiteConstraintException e) {
+            Log.e("Request table", "Filename " + peer + " already exists in table");
+        } finally {
+            //db.endTransaction();
+        }
+        //db.close();
+
+    }
 
     /**
      * checks if a device is trusted by this node
