@@ -14,16 +14,19 @@
         android:text="My Files"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="130dp"
+        android:id="@+id/button8"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="150dp"
-        android:id="@+id/button8" />
+        android:onClick="myFiles" />
 
     <Button
         android:text="Trusted Peers"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/button11"
-        android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true" />
+        android:layout_marginTop="16dp"
+        android:layout_below="@+id/button8"
+        android:layout_centerHorizontal="true"
+        android:onClick="trustedPeers" />
 </RelativeLayout>

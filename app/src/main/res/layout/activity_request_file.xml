@@ -5,17 +5,6 @@
     android:layout_height="match_parent"
     android:weightSum="1">
 
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:inputType="textPersonName"
-        android:hint="Enter Filename"
-        android:ems="10"
-        android:id="@+id/requested_file"
-        android:layout_marginTop="44dp"
-        android:layout_below="@+id/textView4"
-        android:layout_centerHorizontal="true" />
-
     <Button
         android:text="@string/request"
         android:layout_width="wrap_content"
@@ -39,31 +28,71 @@
         android:layout_centerHorizontal="true"
         />
 
+
+    <TextView
+        android:text="@string/request_a_file"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="45dp"
+        android:id="@+id/textView4"
+        android:textSize="24sp"
+        android:textStyle="normal|bold"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:hint="Enter Filename"
+        android:ems="10"
+        android:id="@+id/requested_file"
+        android:layout_marginTop="31dp"
+        android:layout_below="@+id/textView4"
+        android:layout_centerHorizontal="true" />
+
+    <ProgressBar
+        style="@android:style/Widget.Material.Light.ProgressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/progressBar"
+        android:layout_marginTop="37dp"
+        android:layout_alignTop="@+id/status"
+        android:layout_centerHorizontal="true" />
+
     <Button
         android:text="Scan for Peers"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/button10"
         android:onClick="scanForPeers"
-        android:layout_marginRight="50dp"
-        android:layout_marginEnd="50dp"
-        android:layout_below="@+id/status"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_marginLeft="4dp"
-        android:layout_marginTop="38dp" />
+        android:layout_above="@+id/button"
+        android:layout_toRightOf="@+id/progressBar"
+        android:layout_toEndOf="@+id/progressBar" />
 
+    <Button
+        android:text="Settings"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/button"
+        android:onClick="manageSettings"
+        android:layout_marginRight="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="33dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignRight="@+id/button10"
+        android:layout_alignEnd="@+id/button10" />
 
     <ToggleButton
         android:text="ToggleButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/status"
-        android:layout_toLeftOf="@+id/button10"
-        android:layout_alignBottom="@id/button10"
-        android:layout_alignTop="@id/button10"
         android:id="@+id/toggleButton"
-        android:onClick="scan" />
+        android:onClick="scan"
+        android:layout_alignBaseline="@+id/button10"
+        android:layout_alignBottom="@+id/button10"
+        android:layout_alignLeft="@+id/textView4"
+        android:layout_alignStart="@+id/textView4" />
 
     <TextView
         android:text="Scanning:"
@@ -76,38 +105,6 @@
         android:layout_alignBottom="@+id/toggleButton"
         android:layout_toLeftOf="@+id/toggleButton"
         android:layout_toStartOf="@+id/toggleButton" />
-
-    <ProgressBar
-        style="@android:style/Widget.Material.Light.ProgressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/progressBar"
-        android:layout_above="@+id/button10"
-        android:layout_centerHorizontal="true" />
-
-    <Button
-        android:text="Settings"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/button"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_marginRight="12dp"
-        android:layout_marginEnd="12dp"
-        android:layout_marginBottom="19dp"
-        android:onClick="manageSettings" />
-
-    <TextView
-        android:text="@string/request_a_file"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="45dp"
-        android:id="@+id/textView4"
-        android:textSize="24sp"
-        android:textStyle="normal|bold"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true" />
 
 
 </RelativeLayout>
