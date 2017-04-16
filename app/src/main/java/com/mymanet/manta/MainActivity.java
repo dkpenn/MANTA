@@ -671,6 +671,7 @@ public class MainActivity extends AppCompatActivity {
                                     db.updateStatusMessage("Downloading " + filename);
                                     db.deleteRequest(pkt.getFilename());
                                     uiHandler.sendEmptyMessage(0);
+                                    db.updateStatusMessage("");
                                 }
                                 break;
                             default:
@@ -1003,6 +1004,7 @@ public class MainActivity extends AppCompatActivity {
 
                             //if not uploaded, then delete from relay node
                             final MySQLLiteHelper db = MySQLLiteHelper.getHelper(context);
+                            db.updateStatusMessage("");
                             if(!db.containsFile(packet.getFilename())) {
                                 final File f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
                                         packet.getFilename());
