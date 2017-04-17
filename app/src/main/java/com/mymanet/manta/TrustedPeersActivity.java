@@ -31,15 +31,17 @@ public class TrustedPeersActivity extends AppCompatActivity {
         listView.setAdapter(imageNamesAdapter);
     }
 
-    public void AddPeer(View view) {
+    public void addPeer(View view) {
         String peer = mEdit.getText().toString();
         MySQLLiteHelper db = MySQLLiteHelper.getHelper(this);
         db.addPeer(peer);
+        refreshListView();
 
     }
 
     public void deletePeers(View view) {
         MySQLLiteHelper db = MySQLLiteHelper.getHelper(this);
         db.deleteAllTrustedPeers();
+        refreshListView();
     }
 }

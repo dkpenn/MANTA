@@ -59,9 +59,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/button12"
-        android:onClick="addPeer"
         android:layout_alignTop="@+id/peer_name"
         android:layout_toRightOf="@+id/peer_name"
-        android:layout_toEndOf="@+id/peer_name" />
+        android:layout_toEndOf="@+id/peer_name"
+        android:onClick="addPeer" />
 
 </RelativeLayout>
