@@ -217,7 +217,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
 
-                mScanningHandler.postDelayed(mServiceScannningRunnable, 10000);
+                mScanningHandler.postDelayed(mServiceScannningRunnable, 5000);
             }
             // TODO maybe this should be in the loop?
         }
@@ -307,7 +307,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
 
-            //scan again after 5 seconds
+            //scan again after 7 seconds
             mScanningHandler.postDelayed(mServiceScannningRunnable, 7000);
         }
     }
@@ -816,6 +816,9 @@ public class MainActivity extends AppCompatActivity {
                 MainActivity.this.packet = pkt;
                 MainActivity.this.toConnectDevice = node;
 
+                mBroadcastHandler
+                        .postDelayed(mServiceBroadcastingRunnable, 5000);
+
 
             } else {
                 //ignore this
@@ -841,6 +844,10 @@ public class MainActivity extends AppCompatActivity {
 
                 MainActivity.this.packet = pkt;
                 MainActivity.this.toConnectDevice = node;
+
+                mBroadcastHandler
+                        .postDelayed(mServiceBroadcastingRunnable, 5000);
+
 
             } else {
                 //ignore the acknowledgement
@@ -871,6 +878,10 @@ public class MainActivity extends AppCompatActivity {
 
                 MainActivity.this.toConnectDevice = node;
                 MainActivity.this.packet = pkt;
+
+                mBroadcastHandler
+                        .postDelayed(mServiceBroadcastingRunnable, 5000);
+
             } else {
                 //ignore if not in right state
                 MainActivity.this.packet = null;
@@ -1078,7 +1089,19 @@ public class MainActivity extends AppCompatActivity {
             // after server start scanning again
             if(prevScanningState) {
                 scanning = prevScanningState;
-                mScanningHandler.postDelayed(mServiceScannningRunnable, 2000);
+                mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
+
+                    @Override
+                    public void onSuccess() {
+                        Log.d("Discovery Succeeded", "scan for peers button");
+                    }
+
+                    @Override
+                    public void onFailure(int i) {
+                        Log.d("Discovery Failure", "reason " + i);
+                    }
+                });
+                mScanningHandler.postDelayed(mServiceScannningRunnable, 500);
             }
             return null;
         }
